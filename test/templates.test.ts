@@ -1,6 +1,6 @@
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import type { FastifyInstance } from 'fastify';
-import { form, loginAs, makeApp } from './helpers/app.js';
+import { form, loginAs, makeApp, messageDefaults } from './helpers/app.js';
 import { listTemplates } from '../src/content/templates.js';
 import { getMessage } from '../src/content/messages.js';
 
@@ -13,7 +13,8 @@ beforeAll(async () => {
 });
 afterAll(async () => app.close());
 
-async function post(url: string, data: Record<string, string>) {
+async function post(url: string, data: Record<string, string | string[]>) {
+  if (url === '/admin/messages' || /\/admin\/messages\/\d+$/.test(url)) data = { ...messageDefaults(String(data.template_id)), ...data };
   const f = form(data);
   return app.inject({ method: 'POST', url, headers: { ...f.headers, cookie }, payload: f.payload });
 }

@@ -39,6 +39,8 @@
   --state-error-bg: #F6E3E8;
   --state-success-fg: #1E5E3A;
   --state-success-bg: #E1EFE5;
+  --state-wait-fg: #6B4A00;
+  --state-wait-bg: #F3E6C4;
   --state-neutral-fg: var(--brand-gray);
   --state-neutral-bg: #DCD7CB;
 }

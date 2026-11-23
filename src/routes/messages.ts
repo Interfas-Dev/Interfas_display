@@ -16,11 +16,26 @@ import {
 } from '../content/messages.js';
 import { BRAND_COLORS, FONT_SIZES } from '../content/sanitize.js';
 import { getDefaultTemplate, getTemplate, listTemplates } from '../content/templates.js';
+import {
+  ALL_DAYS,
+  DAY_LABELS,
+  DURATION_DEFAULT,
+  DURATION_MAX,
+  DURATION_MIN,
+  STATUS_LABELS,
+  describeSchedule,
+  localNow,
+  scheduleStatus,
+} from '../content/schedule.js';
 
 const LAYOUT = { layout: 'partials/layout.ejs' };
 type IdParams = { Params: { id: string } };
 type FormBody = Record<string, string | undefined>;
-type FormMessage = Pick<Message, 'title' | 'heading' | 'content_html' | 'signature_name' | 'signature_role' | 'template_id' | 'is_active'> & { id?: number };
+type FormMessage = Pick<
+  Message,
+  | 'title' | 'heading' | 'content_html' | 'signature_name' | 'signature_role' | 'template_id' | 'is_active'
+  | 'duration_seconds' | 'starts_at' | 'ends_at' | 'days_mask' | 'daily_start' | 'daily_end'
+> & { id?: number };
 
 function parseId(raw: string): number | null {
   const id = Number(raw);
@@ -37,6 +52,12 @@ function fromInput(input: MessageInput, id?: number): FormMessage {
     signature_role: input.signatureRole,
     template_id: input.templateId,
     is_active: input.isActive ? 1 : 0,
+    duration_seconds: input.durationSeconds,
+    starts_at: input.startsAt,
+    ends_at: input.endsAt,
+    days_mask: input.daysMask,
+    daily_start: input.dailyStart,
+    daily_end: input.dailyEnd,
   };
 }
 
@@ -59,20 +80,29 @@ export async function messageRoutes(app: FastifyInstance) {
         fontSizes: FONT_SIZES,
         brandColors: BRAND_COLORS,
         templates: listTemplates(app.db),
+        dayLabels: DAY_LABELS,
+        duration: { min: DURATION_MIN, max: DURATION_MAX },
         ...data,
       },
       LAYOUT,
     );
 
-  app.get('/', async (req, reply) =>
-    reply.view('admin/messages/index.ejs', { title: 'Messages', user: req.user, messages: listMessages(app.db) }, LAYOUT),
-  );
+  app.get('/', async (req, reply) => {
+    const now = localNow(new Date(), app.config.timezone);
+    const messages = listMessages(app.db).map((m) => {
+      const status = scheduleStatus(m, now);
+      return { ...m, status, statusLabel: STATUS_LABELS[status], scheduleText: describeSchedule(m) };
+    });
+    return reply.view('admin/messages/index.ejs', { title: 'Messages', user: req.user, messages }, LAYOUT);
+  });
 
   app.get('/new', async (_req, reply) =>
     renderForm(reply, {
       message: {
         title: '', heading: '', content_html: '', signature_name: '', signature_role: '',
         template_id: getDefaultTemplate(app.db)?.id ?? null, is_active: 1,
+        duration_seconds: DURATION_DEFAULT, starts_at: null, ends_at: null,
+        days_mask: ALL_DAYS, daily_start: null, daily_end: null,
       },
       errors: {},
     }),

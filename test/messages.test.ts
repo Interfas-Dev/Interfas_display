@@ -1,6 +1,6 @@
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import type { FastifyInstance } from 'fastify';
-import { form, loginAs, makeApp } from './helpers/app.js';
+import { form, loginAs, makeApp, messageDefaults } from './helpers/app.js';
 import { listMessages } from '../src/content/messages.js';
 import { sanitizeContent } from '../src/content/sanitize.js';
 
@@ -18,8 +18,8 @@ beforeAll(() => {
   tid = String((app.db.prepare('SELECT id FROM templates WHERE is_default = 1').get() as { id: number }).id);
 });
 
-async function post(url: string, data: Record<string, string>) {
-  if ((url === '/admin/messages' || /\/admin\/messages\/\d+$/.test(url)) && !('template_id' in data)) data = { template_id: tid, ...data };
+async function post(url: string, data: Record<string, string | string[]>) {
+  if (url === '/admin/messages' || /\/admin\/messages\/\d+$/.test(url)) data = { ...messageDefaults(tid), ...data };
   const f = form(data);
   return app.inject({ method: 'POST', url, headers: { ...f.headers, cookie }, payload: f.payload });
 }

@@ -9,11 +9,20 @@ export async function makeApp(): Promise<FastifyInstance> {
   return buildApp({ ...loadConfig({}), databasePath: ':memory:', logLevel: 'silent' });
 }
 
-export function form(data: Record<string, string>) {
+export function form(data: Record<string, string | string[]>) {
+  const params = new URLSearchParams();
+  for (const [k, v] of Object.entries(data)) for (const x of Array.isArray(v) ? v : [v]) params.append(k, x);
   return {
     headers: { 'content-type': 'application/x-www-form-urlencoded' },
-    payload: new URLSearchParams(data).toString(),
+    payload: params.toString(),
   };
+}
+
+export const ALL_DAYS_FIELD = ['0', '1', '2', '3', '4', '5', '6'];
+
+/** Champs « Diffusion » par défaut d'un formulaire de message. */
+export function messageDefaults(templateId: string) {
+  return { template_id: templateId, duration_seconds: '10', days: ALL_DAYS_FIELD };
 }
 
 export function sessionCookie(res: LightMyRequestResponse): string {
