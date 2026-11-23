@@ -72,13 +72,13 @@ function isSameOrigin(req: FastifyRequest): boolean {
   }
 }
 
-export function sessionCookieOptions() {
+export function sessionCookieOptions(secure: boolean) {
   return {
     path: '/',
     httpOnly: true,
     sameSite: 'strict' as const,
-    // Réseau local en HTTP : pas de flag Secure. À activer si un HTTPS est mis en place.
-    secure: false,
+    // Activé derrière Traefik en HTTPS (COOKIE_SECURE=true).
+    secure,
     signed: true,
     maxAge: Math.floor(SESSION_TTL_MS / 1000),
   };

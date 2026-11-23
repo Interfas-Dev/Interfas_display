@@ -47,16 +47,29 @@ docker compose exec app node dist/cli/create-user.js matthias "Matthias"    # en
 
 Le mot de passe (10 caractères minimum) est demandé de façon masquée. Chacun peut ensuite le changer depuis « Mon compte » dans l'admin.
 
-## Déploiement (Docker)
+## Déploiement (Docker + Traefik)
+
+L'application se place derrière le Traefik existant du serveur, sur le même schéma que passbolt : réseau externe `proxy`, certificat wildcard servi par le file provider (`tls=true`, pas de certresolver), filtrage IP LAN + VPN, redirection HTTP vers HTTPS. Aucun port n'est publié sur l'hôte.
 
 ```bash
+cd ~/docker
+git clone https://github.com/Interfas-Dev/Interfas_display.git interfas-display
+cd interfas-display
 cp .env.example .env
-# Générer un secret : node -e "console.log(require('crypto').randomBytes(48).toString('hex'))"
-# puis le mettre dans SESSION_SECRET
+# Renseigner SESSION_SECRET, DISPLAY_HOST, DISPLAY_ALLOWED_IPS,
+# TRAEFIK_EP_HTTPS et TRAEFIK_EP_HTTP (reprendre ceux de ~/docker/passbolt/.env)
 docker compose up -d --build
+docker compose exec app node dist/cli/create-user.js matthias "Matthias"
 ```
 
-La base SQLite est stockée dans le volume Docker `interfas-data`.
+Points d'attention :
+
+- `DISPLAY_HOST` doit être couvert par le certificat wildcard et résolu par le DNS du LAN vers le serveur.
+- L'écran d'affichage doit être dans `DISPLAY_ALLOWED_IPS`, sinon Traefik renvoie 403.
+- Ne pas ajouter de middleware `compress` ni `buffering` : le flux temps réel `/display/events` (SSE) doit passer tel quel.
+- En Docker, `COOKIE_SECURE` et `TRUST_PROXY` sont forcés à `true` : la connexion à l'admin ne fonctionne donc qu'en HTTPS.
+
+La base SQLite est stockée dans le volume Docker `interfas-data` (préfixé par le nom du dossier, à sauvegarder). C'est le même que dans la première version : un `docker compose up -d --build` dans le même dossier conserve les comptes et les messages.
 
 ## Structure
 

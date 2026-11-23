@@ -8,6 +8,10 @@ export interface AppConfig {
   isProduction: boolean;
   logLevel: string;
   timezone: string;
+  /** Cookie de session envoyé uniquement en HTTPS. */
+  cookieSecure: boolean;
+  /** Derrière un reverse proxy (Traefik) : lire X-Forwarded-For / -Proto. */
+  trustProxy: boolean;
 }
 
 export function loadConfig(env: NodeJS.ProcessEnv = process.env): AppConfig {
@@ -26,5 +30,7 @@ export function loadConfig(env: NodeJS.ProcessEnv = process.env): AppConfig {
     isProduction,
     logLevel: env.LOG_LEVEL ?? 'info',
     timezone: env.TIMEZONE ?? 'Europe/Paris',
+    cookieSecure: env.COOKIE_SECURE === 'true',
+    trustProxy: env.TRUST_PROXY === 'true',
   };
 }

@@ -27,6 +27,7 @@ const rootDir = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..')
 export async function buildApp(config: AppConfig): Promise<FastifyInstance> {
   const app = Fastify({
     logger: { level: config.logLevel },
+    trustProxy: config.trustProxy,
   });
 
   const db = openDatabase(config.databasePath);

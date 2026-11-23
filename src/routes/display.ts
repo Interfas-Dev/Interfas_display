@@ -27,7 +27,7 @@ export async function displayRoutes(app: FastifyInstance) {
     const res = reply.raw;
     res.writeHead(200, {
       'content-type': 'text/event-stream; charset=utf-8',
-      'cache-control': 'no-store',
+      'cache-control': 'no-store, no-transform',
       connection: 'keep-alive',
       'x-accel-buffering': 'no',
     });

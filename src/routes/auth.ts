@@ -44,7 +44,7 @@ export async function authRoutes(app: FastifyInstance) {
       if (req.sessionId) deleteSession(app.db, req.sessionId);
       const sessionId = createSession(app.db, user.id);
       touchLastLogin(app.db, user.id);
-      reply.setCookie(SESSION_COOKIE, sessionId, sessionCookieOptions());
+      reply.setCookie(SESSION_COOKIE, sessionId, sessionCookieOptions(app.config.cookieSecure));
       return reply.redirect(next, 303);
     },
   );
