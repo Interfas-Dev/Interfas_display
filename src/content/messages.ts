@@ -1,39 +1,84 @@
 import type { Db } from '../db/index.js';
 import { isEmptyContent, sanitizeContent } from './sanitize.js';
+import type { Frame, Theme } from './templates.js';
 
 export interface Message {
   id: number;
   title: string;
+  heading: string;
   content_html: string;
+  signature_name: string;
+  signature_role: string;
+  template_id: number | null;
   is_active: number;
   position: number;
   created_at: string;
   updated_at: string;
   updated_by_name: string | null;
+  // Champs du template associé (pour le rendu)
+  template_name: string | null;
+  theme: Theme;
+  frame: Frame;
+  show_logo: number;
+  /** Signature affichée : celle du message, sinon celle par défaut du template. */
+  sig_name: string;
+  sig_role: string;
 }
 
 export interface MessageInput {
   title: string;
+  heading: string;
   contentHtml: string;
+  signatureName: string;
+  signatureRole: string;
+  templateId: number | null;
   isActive: boolean;
 }
 
 export const TITLE_MAX = 120;
+export const HEADING_MAX = 120;
+export const SIGNATURE_MAX = 80;
 
 /** Valide et normalise une saisie. Retourne les erreurs par champ. */
-export function validateMessage(raw: { title?: unknown; content?: unknown; is_active?: unknown }) {
-  const title = String(raw.title ?? '').trim();
+export function validateMessage(raw: Record<string, unknown>, templateExists: (id: number) => boolean) {
+  const heading = String(raw.heading ?? '').trim();
+  // Le titre interne reprend le titre affiché s'il est laissé vide.
+  const title = String(raw.title ?? '').trim() || heading;
   const contentHtml = sanitizeContent(String(raw.content ?? ''));
+  const signatureName = String(raw.signature_name ?? '').trim();
+  const signatureRole = String(raw.signature_role ?? '').trim();
+  const tid = Number(raw.template_id);
+  const templateId = Number.isInteger(tid) && tid > 0 ? tid : null;
   const isActive = raw.is_active === 'on' || raw.is_active === '1' || raw.is_active === true;
+
   const errors: Record<string, string> = {};
-  if (!title) errors.title = 'Le titre est obligatoire.';
-  else if (title.length > TITLE_MAX) errors.title = `Le titre ne doit pas dépasser ${TITLE_MAX} caractères.`;
-  if (isEmptyContent(contentHtml)) errors.content = 'Le message ne peut pas être vide.';
-  return { input: { title, contentHtml, isActive } satisfies MessageInput, errors };
+  if (!title) errors.title = 'Donne au moins un titre (affiché ou interne).';
+  else if (title.length > TITLE_MAX) errors.title = `Le titre interne ne doit pas dépasser ${TITLE_MAX} caractères.`;
+  if (heading.length > HEADING_MAX) errors.heading = `Le titre affiché ne doit pas dépasser ${HEADING_MAX} caractères.`;
+  if (!heading && isEmptyContent(contentHtml)) errors.content = 'Le message est vide : ajoute un titre affiché ou du texte.';
+  if (signatureName.length > SIGNATURE_MAX || signatureRole.length > SIGNATURE_MAX) {
+    errors.signature = `La signature ne doit pas dépasser ${SIGNATURE_MAX} caractères par ligne.`;
+  }
+  if (!templateId || !templateExists(templateId)) errors.template_id = 'Choisis un template.';
+
+  return {
+    input: { title, heading, contentHtml: isEmptyContent(contentHtml) ? '' : contentHtml, signatureName, signatureRole, templateId, isActive } satisfies MessageInput,
+    errors,
+  };
 }
 
-const SELECT = `SELECT m.*, u.display_name AS updated_by_name
-  FROM messages m LEFT JOIN users u ON u.id = m.updated_by`;
+const SELECT = `SELECT m.*, u.display_name AS updated_by_name,
+    t.name AS template_name,
+    COALESCE(t.theme, 'light') AS theme,
+    COALESCE(t.frame, 'none') AS frame,
+    COALESCE(t.show_logo, 1) AS show_logo,
+    CASE WHEN m.signature_name != '' OR m.signature_role != '' THEN m.signature_name
+         ELSE COALESCE(t.default_signature_name, '') END AS sig_name,
+    CASE WHEN m.signature_name != '' OR m.signature_role != '' THEN m.signature_role
+         ELSE COALESCE(t.default_signature_role, '') END AS sig_role
+  FROM messages m
+  LEFT JOIN users u ON u.id = m.updated_by
+  LEFT JOIN templates t ON t.id = m.template_id`;
 
 export function listMessages(db: Db): Message[] {
   return db.prepare(`${SELECT} ORDER BY m.position, m.id`).all() as Message[];
@@ -51,10 +96,13 @@ export function createMessage(db: Db, input: MessageInput, userId: number): numb
   const next = (db.prepare('SELECT COALESCE(MAX(position), -1) + 1 AS p FROM messages').get() as { p: number }).p;
   const info = db
     .prepare(
-      `INSERT INTO messages (title, content_html, is_active, position, created_by, updated_by)
-       VALUES (?, ?, ?, ?, ?, ?)`,
+      `INSERT INTO messages (title, heading, content_html, signature_name, signature_role, template_id, is_active, position, created_by, updated_by)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
     )
-    .run(input.title, input.contentHtml, input.isActive ? 1 : 0, next, userId, userId);
+    .run(
+      input.title, input.heading, input.contentHtml, input.signatureName, input.signatureRole,
+      input.templateId, input.isActive ? 1 : 0, next, userId, userId,
+    );
   return Number(info.lastInsertRowid);
 }
 
@@ -62,10 +110,14 @@ export function updateMessage(db: Db, id: number, input: MessageInput, userId: n
   return (
     db
       .prepare(
-        `UPDATE messages SET title = ?, content_html = ?, is_active = ?, updated_by = ?, updated_at = datetime('now')
+        `UPDATE messages SET title = ?, heading = ?, content_html = ?, signature_name = ?, signature_role = ?,
+           template_id = ?, is_active = ?, updated_by = ?, updated_at = datetime('now')
          WHERE id = ?`,
       )
-      .run(input.title, input.contentHtml, input.isActive ? 1 : 0, userId, id).changes > 0
+      .run(
+        input.title, input.heading, input.contentHtml, input.signatureName, input.signatureRole,
+        input.templateId, input.isActive ? 1 : 0, userId, id,
+      ).changes > 0
   );
 }
 

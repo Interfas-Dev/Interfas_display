@@ -9,7 +9,7 @@ import TextAlign from '@tiptap/extension-text-align';
 
 const surface = document.getElementById('editor');
 const hidden = document.getElementById('content') as HTMLInputElement | null;
-const preview = document.getElementById('preview');
+const preview = document.querySelector<HTMLElement>('#preview .slide-body');
 const toolbar = document.querySelector<HTMLElement>('.toolbar');
 
 if (surface && hidden && toolbar) {
@@ -104,7 +104,8 @@ if (surface && hidden && toolbar) {
   });
 
   editor.on('update', sync);
-  editor.on('selectionUpdate', refreshToolbar);
+  // « transaction » couvre aussi les marques en attente (ex. gras activé sans texte).
+  editor.on('transaction', refreshToolbar);
   toolbar.hidden = false;
   sync();
 }

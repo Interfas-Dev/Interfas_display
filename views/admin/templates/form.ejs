@@ -1,0 +1,65 @@
+<div class="page-head">
+  <h1><%= title %></h1>
+  <a href="/admin/templates">← Retour aux templates</a>
+</div>
+
+<form method="post" action="/admin/templates<%= template.id ? '/' + template.id : '' %>" class="message-form" id="template-form">
+  <div class="editor-col">
+    <label class="field">Nom
+      <input name="name" value="<%= template.name %>" maxlength="<%= nameMax %>" required>
+      <% if (errors.name) { %><span class="field-error"><%= errors.name %></span><% } %>
+    </label>
+
+    <fieldset class="field-group">
+      <legend>Thème</legend>
+      <% themes.forEach((t) => { %>
+        <label class="radio"><input type="radio" name="theme" value="<%= t.value %>" <%= template.theme === t.value ? 'checked' : '' %>> <%= t.label %></label>
+      <% }) %>
+    </fieldset>
+
+    <fieldset class="field-group">
+      <legend>Cadre</legend>
+      <% frames.forEach((f) => { %>
+        <label class="radio"><input type="radio" name="frame" value="<%= f.value %>" <%= template.frame === f.value ? 'checked' : '' %>> <%= f.label %></label>
+      <% }) %>
+    </fieldset>
+
+    <label class="checkbox">
+      <input type="checkbox" name="show_logo" value="on" <%= template.show_logo ? 'checked' : '' %>>
+      Afficher le logo dans l'en-tête
+    </label>
+
+    <fieldset class="field-group">
+      <legend>Signature par défaut</legend>
+      <div class="field-row">
+        <label class="field">Nom
+          <input name="default_signature_name" id="default_signature_name" value="<%= template.default_signature_name %>" maxlength="<%= signatureMax %>">
+        </label>
+        <label class="field">Fonction
+          <input name="default_signature_role" id="default_signature_role" value="<%= template.default_signature_role %>" maxlength="<%= signatureMax %>">
+        </label>
+      </div>
+      <% if (errors.signature) { %><span class="field-error"><%= errors.signature %></span><% } %>
+      <span class="hint">Utilisée quand un message n'a pas sa propre signature.</span>
+    </fieldset>
+
+    <label class="checkbox">
+      <input type="checkbox" name="is_default" value="on" <%= template.is_default ? 'checked' : '' %>>
+      Template proposé par défaut pour les nouveaux messages
+    </label>
+
+    <div class="form-actions">
+      <button type="submit" class="btn primary">Enregistrer</button>
+      <a class="btn" href="/admin/templates">Annuler</a>
+    </div>
+  </div>
+
+  <aside class="preview-col">
+    <h2>Aperçu avec un message d'exemple</h2>
+    <div class="screen-preview" id="template-preview" data-sample-name="<%= sample.signature_name %>" data-sample-role="<%= sample.signature_role %>">
+      <%- include('../../partials/slide', { m: { ...sample, theme: template.theme, frame: template.frame, show_logo: template.show_logo,
+        sig_name: template.default_signature_name || sample.signature_name, sig_role: template.default_signature_role || sample.signature_role } }) %>
+    </div>
+  </aside>
+</form>
+<script src="/public/js/template-preview.js"></script>

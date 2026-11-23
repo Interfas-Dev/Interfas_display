@@ -1,3 +1,4 @@
+<% const current = templates.find((t) => t.id === message.template_id) || templates[0]; %>
 <div class="page-head">
   <h1><%= title %></h1>
   <a href="/admin/messages">← Retour aux messages</a>
@@ -5,14 +6,24 @@
 
 <form method="post" action="/admin/messages<%= message.id ? '/' + message.id : '' %>" class="message-form" id="message-form">
   <div class="editor-col">
-    <label class="field">Titre (interne, non affiché à l'écran)
-      <input name="title" value="<%= message.title %>" maxlength="<%= titleMax %>" required>
-      <% if (errors.title) { %><span class="field-error"><%= errors.title %></span><% } %>
+    <label class="field">Template
+      <select name="template_id" id="template_id" data-templates="<%= JSON.stringify(templates.map((t) => ({ id: t.id, theme: t.theme, frame: t.frame, show_logo: t.show_logo, sig_name: t.default_signature_name, sig_role: t.default_signature_role }))) %>">
+        <% templates.forEach((t) => { %>
+          <option value="<%= t.id %>" <%= current && t.id === current.id ? 'selected' : '' %>><%= t.name %></option>
+        <% }) %>
+      </select>
+      <% if (errors.template_id) { %><span class="field-error"><%= errors.template_id %></span><% } %>
+      <span class="hint">Les templates se modifient dans <a href="/admin/templates">Paramètres</a>.</span>
+    </label>
+
+    <label class="field">Titre affiché
+      <input name="heading" id="heading" value="<%= message.heading %>" maxlength="<%= limits.heading %>" placeholder="Ex. FORMATION HOROQUARTZ">
+      <% if (errors.heading) { %><span class="field-error"><%= errors.heading %></span><% } %>
     </label>
 
     <div class="field">
-      <span>Contenu</span>
-      <div class="editor" data-font-sizes="<%= JSON.stringify(fontSizes) %>">
+      <span>Texte</span>
+      <div class="editor">
         <div class="toolbar" role="toolbar" aria-label="Mise en forme" hidden>
           <select data-cmd="block" aria-label="Style de paragraphe">
             <option value="p">Texte</option>
@@ -47,12 +58,32 @@
           <button type="button" data-cmd="undo" title="Annuler">↶</button>
           <button type="button" data-cmd="redo" title="Rétablir">↷</button>
         </div>
-        <div class="editor-surface" id="editor"></div>
+        <div class="editor-surface theme-<%= current ? current.theme : 'light' %>" id="editor"></div>
         <noscript><p class="field-error">L'éditeur nécessite JavaScript.</p></noscript>
       </div>
       <input type="hidden" name="content" id="content" value="<%= message.content_html %>">
       <% if (errors.content) { %><span class="field-error"><%= errors.content %></span><% } %>
     </div>
+
+    <fieldset class="field-group">
+      <legend>Signature (en bas à droite)</legend>
+      <div class="field-row">
+        <label class="field">Nom
+          <input name="signature_name" id="signature_name" value="<%= message.signature_name %>" maxlength="<%= limits.signature %>" placeholder="<%= current ? current.default_signature_name : '' %>">
+        </label>
+        <label class="field">Fonction
+          <input name="signature_role" id="signature_role" value="<%= message.signature_role %>" maxlength="<%= limits.signature %>" placeholder="<%= current ? current.default_signature_role : '' %>">
+        </label>
+      </div>
+      <% if (errors.signature) { %><span class="field-error"><%= errors.signature %></span><% } %>
+      <span class="hint">Laisse vide pour utiliser la signature par défaut du template.</span>
+    </fieldset>
+
+    <label class="field">Titre interne (facultatif)
+      <input name="title" value="<%= message.title %>" maxlength="<%= limits.title %>" placeholder="Par défaut : le titre affiché">
+      <% if (errors.title) { %><span class="field-error"><%= errors.title %></span><% } %>
+      <span class="hint">Sert seulement à retrouver le message dans la liste.</span>
+    </label>
 
     <label class="checkbox">
       <input type="checkbox" name="is_active" value="on" <%= message.is_active ? 'checked' : '' %>>
@@ -67,8 +98,16 @@
 
   <aside class="preview-col">
     <h2>Aperçu à l'écran</h2>
-    <div class="screen-preview"><div class="message-body" id="preview"><%- message.content_html %></div></div>
+    <div class="screen-preview" id="preview">
+      <%- include('../../partials/slide', { m: {
+        theme: current ? current.theme : 'light', frame: current ? current.frame : 'none', show_logo: current ? current.show_logo : 1,
+        heading: message.heading, content_html: message.content_html,
+        sig_name: (message.signature_name || message.signature_role) ? message.signature_name : (current ? current.default_signature_name : ''),
+        sig_role: (message.signature_name || message.signature_role) ? message.signature_role : (current ? current.default_signature_role : ''),
+      } }) %>
+    </div>
     <p class="muted small">Aperçu en 16:9. Les tailles s'adaptent à la résolution réelle de l'écran.</p>
   </aside>
 </form>
+<script src="/public/js/preview.js"></script>
 <script type="module" src="/public/build/editor.js"></script>
