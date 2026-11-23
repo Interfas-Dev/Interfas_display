@@ -86,4 +86,18 @@ export const migrations: Migration[] = [
       UPDATE messages SET template_id = (SELECT id FROM templates WHERE is_default = 1);
     `,
   },
+  {
+    version: 5,
+    name: 'duree_planification',
+    sql: `
+      -- Dates et heures en heure locale de l'atelier (fuseau TIMEZONE, Paris par défaut),
+      -- au format AAAA-MM-JJTHH:MM. days_mask : bit 0 = lundi ... bit 6 = dimanche.
+      ALTER TABLE messages ADD COLUMN duration_seconds INTEGER NOT NULL DEFAULT 10;
+      ALTER TABLE messages ADD COLUMN starts_at TEXT;
+      ALTER TABLE messages ADD COLUMN ends_at TEXT;
+      ALTER TABLE messages ADD COLUMN days_mask INTEGER NOT NULL DEFAULT 127;
+      ALTER TABLE messages ADD COLUMN daily_start TEXT;
+      ALTER TABLE messages ADD COLUMN daily_end TEXT;
+    `,
+  },
 ];

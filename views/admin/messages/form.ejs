@@ -85,10 +85,52 @@
       <span class="hint">Sert seulement à retrouver le message dans la liste.</span>
     </label>
 
-    <label class="checkbox">
-      <input type="checkbox" name="is_active" value="on" <%= message.is_active ? 'checked' : '' %>>
-      Diffuser ce message à l'écran
-    </label>
+    <fieldset class="field-group">
+      <legend>Diffusion</legend>
+      <label class="checkbox">
+        <input type="checkbox" name="is_active" value="on" <%= message.is_active ? 'checked' : '' %>>
+        Diffuser ce message à l'écran
+      </label>
+
+      <label class="field field-inline">Durée d'affichage
+        <span class="input-suffix">
+          <input type="number" name="duration_seconds" value="<%= message.duration_seconds %>" min="<%= duration.min %>" max="<%= duration.max %>" step="1" required>
+          <span>secondes</span>
+        </span>
+      </label>
+      <% if (errors.duration) { %><span class="field-error"><%= errors.duration %></span><% } %>
+
+      <div class="field-row">
+        <label class="field">Début (facultatif)
+          <input type="datetime-local" name="starts_at" value="<%= message.starts_at || '' %>">
+        </label>
+        <label class="field">Fin (facultatif)
+          <input type="datetime-local" name="ends_at" value="<%= message.ends_at || '' %>">
+        </label>
+      </div>
+      <% if (errors.period) { %><span class="field-error"><%= errors.period %></span><% } %>
+
+      <div class="field">
+        <span>Jours</span>
+        <div class="day-picker">
+          <% dayLabels.forEach((d, i) => { %>
+            <label class="day"><input type="checkbox" name="days" value="<%= i %>" <%= (message.days_mask & (1 << i)) ? 'checked' : '' %>><span><%= d %></span></label>
+          <% }) %>
+        </div>
+      </div>
+      <% if (errors.days) { %><span class="field-error"><%= errors.days %></span><% } %>
+
+      <div class="field-row">
+        <label class="field">Chaque jour de (facultatif)
+          <input type="time" name="daily_start" value="<%= message.daily_start || '' %>">
+        </label>
+        <label class="field">à
+          <input type="time" name="daily_end" value="<%= message.daily_end || '' %>">
+        </label>
+      </div>
+      <% if (errors.daily) { %><span class="field-error"><%= errors.daily %></span><% } %>
+      <span class="hint">Heure de l'atelier (Paris). Sans date ni plage horaire, le message passe en continu.</span>
+    </fieldset>
 
     <div class="form-actions">
       <button type="submit" class="btn primary">Enregistrer</button>

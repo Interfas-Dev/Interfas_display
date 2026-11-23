@@ -1,6 +1,7 @@
 import type { Db } from '../db/index.js';
 import { isEmptyContent, sanitizeContent } from './sanitize.js';
 import type { Frame, Theme } from './templates.js';
+import { isLive, validateSchedule, type LocalNow, type ScheduleInput } from './schedule.js';
 
 export interface Message {
   id: number;
@@ -11,6 +12,12 @@ export interface Message {
   signature_role: string;
   template_id: number | null;
   is_active: number;
+  duration_seconds: number;
+  starts_at: string | null;
+  ends_at: string | null;
+  days_mask: number;
+  daily_start: string | null;
+  daily_end: string | null;
   position: number;
   created_at: string;
   updated_at: string;
@@ -25,7 +32,7 @@ export interface Message {
   sig_role: string;
 }
 
-export interface MessageInput {
+export interface MessageInput extends ScheduleInput {
   title: string;
   heading: string;
   contentHtml: string;
@@ -61,8 +68,14 @@ export function validateMessage(raw: Record<string, unknown>, templateExists: (i
   }
   if (!templateId || !templateExists(templateId)) errors.template_id = 'Choisis un template.';
 
+  const schedule = validateSchedule(raw);
+  Object.assign(errors, schedule.errors);
+
   return {
-    input: { title, heading, contentHtml: isEmptyContent(contentHtml) ? '' : contentHtml, signatureName, signatureRole, templateId, isActive } satisfies MessageInput,
+    input: {
+      title, heading, contentHtml: isEmptyContent(contentHtml) ? '' : contentHtml,
+      signatureName, signatureRole, templateId, isActive, ...schedule.input,
+    } satisfies MessageInput,
     errors,
   };
 }
@@ -84,8 +97,11 @@ export function listMessages(db: Db): Message[] {
   return db.prepare(`${SELECT} ORDER BY m.position, m.id`).all() as Message[];
 }
 
-export function listActiveMessages(db: Db): Message[] {
-  return db.prepare(`${SELECT} WHERE m.is_active = 1 ORDER BY m.position, m.id`).all() as Message[];
+/** Messages à afficher maintenant : actifs et dans leur planification. */
+export function listLiveMessages(db: Db, now: LocalNow): Message[] {
+  return (db.prepare(`${SELECT} WHERE m.is_active = 1 ORDER BY m.position, m.id`).all() as Message[]).filter((m) =>
+    isLive(m, now),
+  );
 }
 
 export function getMessage(db: Db, id: number): Message | undefined {
@@ -96,12 +112,15 @@ export function createMessage(db: Db, input: MessageInput, userId: number): numb
   const next = (db.prepare('SELECT COALESCE(MAX(position), -1) + 1 AS p FROM messages').get() as { p: number }).p;
   const info = db
     .prepare(
-      `INSERT INTO messages (title, heading, content_html, signature_name, signature_role, template_id, is_active, position, created_by, updated_by)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      `INSERT INTO messages (title, heading, content_html, signature_name, signature_role, template_id, is_active,
+         duration_seconds, starts_at, ends_at, days_mask, daily_start, daily_end, position, created_by, updated_by)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
     )
     .run(
       input.title, input.heading, input.contentHtml, input.signatureName, input.signatureRole,
-      input.templateId, input.isActive ? 1 : 0, next, userId, userId,
+      input.templateId, input.isActive ? 1 : 0,
+      input.durationSeconds, input.startsAt, input.endsAt, input.daysMask, input.dailyStart, input.dailyEnd,
+      next, userId, userId,
     );
   return Number(info.lastInsertRowid);
 }
@@ -111,12 +130,15 @@ export function updateMessage(db: Db, id: number, input: MessageInput, userId: n
     db
       .prepare(
         `UPDATE messages SET title = ?, heading = ?, content_html = ?, signature_name = ?, signature_role = ?,
-           template_id = ?, is_active = ?, updated_by = ?, updated_at = datetime('now')
+           template_id = ?, is_active = ?, duration_seconds = ?, starts_at = ?, ends_at = ?, days_mask = ?,
+           daily_start = ?, daily_end = ?, updated_by = ?, updated_at = datetime('now')
          WHERE id = ?`,
       )
       .run(
         input.title, input.heading, input.contentHtml, input.signatureName, input.signatureRole,
-        input.templateId, input.isActive ? 1 : 0, userId, id,
+        input.templateId, input.isActive ? 1 : 0,
+        input.durationSeconds, input.startsAt, input.endsAt, input.daysMask, input.dailyStart, input.dailyEnd,
+        userId, id,
       ).changes > 0
   );
 }

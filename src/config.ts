@@ -7,6 +7,7 @@ export interface AppConfig {
   sessionSecret: string;
   isProduction: boolean;
   logLevel: string;
+  timezone: string;
 }
 
 export function loadConfig(env: NodeJS.ProcessEnv = process.env): AppConfig {
@@ -24,5 +25,6 @@ export function loadConfig(env: NodeJS.ProcessEnv = process.env): AppConfig {
     sessionSecret: sessionSecret || 'dev-secret-a-ne-pas-utiliser-en-production',
     isProduction,
     logLevel: env.LOG_LEVEL ?? 'info',
+    timezone: env.TIMEZONE ?? 'Europe/Paris',
   };
 }

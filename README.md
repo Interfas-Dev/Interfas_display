@@ -30,6 +30,10 @@ npm test           # tests
 npm run typecheck  # vérification TypeScript
 ```
 
+## Diffusion
+
+Chaque message a une durée d'affichage (3 s à 5 min, 10 s par défaut) et une planification facultative : date et heure de début et de fin, jours de la semaine, plage horaire quotidienne (qui peut passer minuit). Tout est évalué dans le fuseau `TIMEZONE` (Europe/Paris par défaut). L'écran n'affiche que les messages en cours de diffusion.
+
 ## Comptes utilisateurs
 
 Il n'y a pas d'inscription publique. Les comptes sont créés en ligne de commande :
