@@ -1,6 +1,6 @@
 import crypto from 'node:crypto';
 import type { Db } from '../db/index.js';
-import type { User } from './users.js';
+import { USER_COLUMNS, type User } from './users.js';
 
 export const SESSION_TTL_MS = 7 * 24 * 60 * 60 * 1000; // 7 jours, prolongée à chaque visite
 
@@ -19,9 +19,9 @@ export function getSessionUser(db: Db, sessionId: string): User | undefined {
   const now = new Date().toISOString();
   const user = db
     .prepare(
-      `SELECT u.id, u.username, u.display_name, u.created_at, u.last_login_at
+      `SELECT ${USER_COLUMNS.split(', ').map((c) => 'u.' + c).join(', ')}
        FROM sessions s JOIN users u ON u.id = s.user_id
-       WHERE s.id = ? AND s.expires_at > ?`,
+       WHERE s.id = ? AND s.expires_at > ? AND u.is_active = 1`,
     )
     .get(sessionId, now) as User | undefined;
   if (user) {
@@ -43,4 +43,8 @@ export function deleteOtherSessions(db: Db, userId: number, keepSessionId: strin
 
 export function purgeExpiredSessions(db: Db): void {
   db.prepare('DELETE FROM sessions WHERE expires_at <= ?').run(new Date().toISOString());
+}
+
+export function deleteUserSessions(db: Db, userId: number): void {
+  db.prepare('DELETE FROM sessions WHERE user_id = ?').run(userId);
 }

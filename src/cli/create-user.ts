@@ -3,6 +3,7 @@
  *   En dev    : npm run user:create -- <identifiant> ["Nom affiché"]
  *   En Docker : docker compose exec app node dist/cli/create-user.js <identifiant> ["Nom affiché"]
  * Le mot de passe est demandé de façon masquée (ou lu depuis INTERFAS_PASSWORD).
+ * Sert à créer le premier compte ; les suivants se créent dans Paramètres › Utilisateurs.
  */
 import readline from 'node:readline';
 import { Writable } from 'node:stream';

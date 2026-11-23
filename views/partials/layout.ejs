@@ -13,7 +13,7 @@
     <div class="topbar-left">
       <a class="brand" href="/admin">Interfas Display</a>
       <% if (locals.user) { %>
-        <nav class="main-nav"><a href="/admin/messages">Messages</a><a href="/admin/templates">Paramètres</a></nav>
+        <nav class="main-nav"><a href="/admin/messages">Messages</a><% if (user.role === 'admin') { %><a href="/admin/templates">Paramètres</a><% } %></nav>
       <% } %>
     </div>
     <nav>

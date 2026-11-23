@@ -32,6 +32,7 @@ const SAMPLE = {
 
 export async function templateRoutes(app: FastifyInstance) {
   app.addHook('preHandler', app.requireAuth);
+  app.addHook('preHandler', app.requireAdmin);
 
   const renderList = (reply: FastifyReply, error: string | null = null, code = 200) =>
     reply.code(code).view(

@@ -34,7 +34,8 @@ export async function authRoutes(app: FastifyInstance) {
       const user = username ? findUserByUsername(app.db, username) : undefined;
       const ok = await verifyPassword(user?.password_hash ?? (await getDummyHash()), password);
 
-      if (!user || !ok) {
+      // Compte désactivé : même réponse qu'un mauvais mot de passe.
+      if (!user || !ok || !user.is_active) {
         req.log.warn({ username }, 'échec de connexion');
         return reply
           .code(401)

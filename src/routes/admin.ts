@@ -4,6 +4,7 @@ import { accountRoutes } from './account.js';
 import { messageRoutes } from './messages.js';
 import { templateRoutes } from './templates.js';
 import { mediaUploadRoutes } from './media.js';
+import { userRoutes } from './users.js';
 
 /** Espace d'administration : /admin/login est public, le reste est protégé. */
 export async function adminRoutes(app: FastifyInstance) {
@@ -18,4 +19,5 @@ export async function adminRoutes(app: FastifyInstance) {
   await app.register(messageRoutes, { prefix: '/messages' });
   await app.register(templateRoutes, { prefix: '/templates' });
   await app.register(mediaUploadRoutes, { prefix: '/media' });
+  await app.register(userRoutes, { prefix: '/users' });
 }

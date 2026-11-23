@@ -13,7 +13,7 @@
         <% }) %>
       </select>
       <% if (errors.template_id) { %><span class="field-error"><%= errors.template_id %></span><% } %>
-      <span class="hint">Les templates se modifient dans <a href="/admin/templates">Paramètres</a>.</span>
+      <% if (user.role === 'admin') { %><span class="hint">Les templates se modifient dans <a href="/admin/templates">Paramètres</a>.</span><% } %>
     </label>
 
     <label class="field">Titre affiché
