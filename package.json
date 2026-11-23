@@ -7,7 +7,8 @@
     "build": "tsc -p tsconfig.json",
     "start": "node dist/index.js",
     "test": "vitest run",
-    "typecheck": "tsc --noEmit -p tsconfig.json"
+    "typecheck": "tsc --noEmit -p tsconfig.json",
+    "user:create": "tsx src/cli/create-user.ts"
   },
   "repository": {
     "type": "git",
@@ -15,12 +16,17 @@
   },
   "license": "UNLICENSED",
   "dependencies": {
+    "@fastify/cookie": "^11.1.5",
+    "@fastify/formbody": "^9.0.2",
     "@fastify/helmet": "^13.2.0",
+    "@fastify/rate-limit": "^11.3.0",
     "@fastify/static": "^10.1.12",
     "@fastify/view": "^12.0.1",
+    "argon2": "^0.45.2",
     "better-sqlite3": "^13.2.0",
     "ejs": "^7.0.2",
-    "fastify": "^5.12.8"
+    "fastify": "^5.12.8",
+    "fastify-plugin": "^6.0.1"
   },
   "devDependencies": {
     "@types/better-sqlite3": "^9.6.0",

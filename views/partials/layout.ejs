@@ -11,6 +11,12 @@
     <a class="brand" href="/admin">Interfas Display</a>
     <nav>
       <a href="/display" target="_blank" rel="noopener">Ouvrir l'écran</a>
+      <% if (locals.user) { %>
+        <a href="/admin/account"><%= user.display_name %></a>
+        <form method="post" action="/admin/logout" class="inline">
+          <button type="submit" class="link">Déconnexion</button>
+        </form>
+      <% } %>
     </nav>
   </header>
   <main class="container">

@@ -4,12 +4,15 @@ import Fastify, { type FastifyInstance } from 'fastify';
 import helmet from '@fastify/helmet';
 import fastifyStatic from '@fastify/static';
 import fastifyView from '@fastify/view';
+import cookie from '@fastify/cookie';
+import formbody from '@fastify/formbody';
 import ejs from 'ejs';
 import type { AppConfig } from './config.js';
 import { openDatabase, type Db } from './db/index.js';
 import { healthRoutes } from './routes/health.js';
 import { displayRoutes } from './routes/display.js';
 import { adminRoutes } from './routes/admin.js';
+import authPlugin from './auth/plugin.js';
 
 declare module 'fastify' {
   interface FastifyInstance {
@@ -22,7 +25,7 @@ const rootDir = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..')
 
 export async function buildApp(config: AppConfig): Promise<FastifyInstance> {
   const app = Fastify({
-    logger: config.isProduction ? true : { level: 'info' },
+    logger: { level: config.logLevel },
   });
 
   const db = openDatabase(config.databasePath);
@@ -33,10 +36,15 @@ export async function buildApp(config: AppConfig): Promise<FastifyInstance> {
   await app.register(helmet, {
     // Réseau local en HTTP : on désactive les en-têtes qui forcent le HTTPS.
     hsts: false,
+    // « no-referrer » (défaut) fait envoyer Origin: null sur les formulaires.
+    referrerPolicy: { policy: 'same-origin' },
     contentSecurityPolicy: {
       directives: { upgradeInsecureRequests: null },
     },
   });
+  await app.register(cookie, { secret: config.sessionSecret });
+  await app.register(formbody);
+  await app.register(authPlugin);
   await app.register(fastifyStatic, { root: path.join(rootDir, 'public'), prefix: '/public/' });
   await app.register(fastifyView, {
     engine: { ejs },

@@ -16,3 +16,23 @@ body { margin: 0; background: var(--bg); color: var(--text); }
 .brand { font-weight: 700; color: var(--text); text-decoration: none; }
 .topbar nav a { color: var(--accent); text-decoration: none; margin-left: 1rem; }
 .container { max-width: 1100px; margin: 2rem auto; padding: 0 1.5rem; }
+.topbar nav { display: flex; align-items: center; gap: 1rem; }
+.topbar nav a { margin-left: 0; }
+.inline { display: inline; margin: 0; }
+button.link { background: none; border: 0; padding: 0; color: var(--accent); font: inherit; cursor: pointer; }
+.muted { color: var(--muted); }
+.small { font-size: 0.875rem; }
+.card { background: var(--surface); border: 1px solid var(--border); border-radius: 8px; padding: 1.5rem; max-width: 480px; }
+.card h2 { margin-top: 0; font-size: 1.15rem; }
+.form { display: flex; flex-direction: column; gap: 1rem; }
+.form label { display: flex; flex-direction: column; gap: 0.35rem; font-weight: 500; }
+.form input { padding: 0.6rem 0.75rem; border: 1px solid var(--border); border-radius: 6px; font: inherit; }
+.form input:focus { outline: 2px solid var(--accent); outline-offset: 1px; }
+.btn { padding: 0.65rem 1rem; border-radius: 6px; border: 1px solid var(--border); font: inherit; cursor: pointer; }
+.btn.primary { background: var(--accent); border-color: var(--accent); color: #fff; font-weight: 600; }
+.alert { padding: 0.65rem 0.85rem; border-radius: 6px; margin: 0 0 1rem; }
+.alert.error { background: #fdecec; color: #9b1c1c; }
+.alert.success { background: #e8f6ec; color: #1d6b35; }
+body.auth { min-height: 100vh; display: flex; align-items: center; justify-content: center; padding: 1rem; }
+.auth-card { width: 100%; max-width: 380px; background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 2rem; }
+.auth-card h1 { margin: 0 0 0.25rem; font-size: 1.4rem; }

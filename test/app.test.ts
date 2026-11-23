@@ -6,7 +6,7 @@ import { loadConfig } from '../src/config.js';
 let app: FastifyInstance;
 
 beforeAll(async () => {
-  app = await buildApp({ ...loadConfig({}), databasePath: ':memory:' });
+  app = await buildApp({ ...loadConfig({}), databasePath: ':memory:', logLevel: 'silent' });
 });
 afterAll(async () => app.close());
 
@@ -23,10 +23,10 @@ describe('squelette', () => {
     expect(res.body).toContain('Aucun message');
   });
 
-  it('sert la page admin', async () => {
+  it('redirige l’admin vers la connexion', async () => {
     const res = await app.inject({ method: 'GET', url: '/admin' });
-    expect(res.statusCode).toBe(200);
-    expect(res.body).toContain('Administration');
+    expect(res.statusCode).toBe(302);
+    expect(res.headers.location).toMatch(/^\/admin\/login/);
   });
 
   it('applique les migrations', () => {
