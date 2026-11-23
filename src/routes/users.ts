@@ -19,6 +19,8 @@ import {
   type User,
 } from '../auth/users.js';
 
+import { diff, logAudit, yesNo } from '../audit.js';
+
 const LAYOUT = { layout: 'partials/layout.ejs' };
 type IdParams = { Params: { id: string } };
 type FormBody = Record<string, string | undefined>;
@@ -110,12 +112,16 @@ export async function userRoutes(app: FastifyInstance) {
     if (passwordError) errors.password = passwordError;
     if (Object.keys(errors).length) return renderForm(reply, { account, errors }, 400);
 
-    await createUser(app.db, {
+    const created = await createUser(app.db, {
       username: account.username,
       displayName: account.display_name,
       password,
       role: account.role,
       mustChangePassword: true,
+    });
+    logAudit(app.db, req, {
+      action: 'create', entity: 'user', entityId: created.id, label: `${created.display_name} (${created.username})`,
+      details: [`Rôle : ${ROLE_LABELS[created.role]}`],
     });
     return reply.redirect('/admin/users', 303);
   });
@@ -143,6 +149,18 @@ export async function userRoutes(app: FastifyInstance) {
     if (Object.keys(errors).length) return renderForm(reply, { account, errors }, 400);
 
     updateUser(app.db, current.id, next);
+    const changes = diff(
+      { name: current.display_name, role: current.role, active: !!current.is_active },
+      { name: next.displayName, role: next.role, active: next.isActive },
+      [
+        { label: 'Nom affiché', get: (u) => u.name },
+        { label: 'Rôle', get: (u) => u.role, format: (v) => ROLE_LABELS[v as Role] },
+        { label: 'Actif', get: (u) => u.active, format: yesNo },
+      ],
+    );
+    if (changes.length) {
+      logAudit(app.db, req, { action: 'update', entity: 'user', entityId: current.id, label: `${next.displayName} (${current.username})`, details: changes });
+    }
     return reply.redirect('/admin/users', 303);
   });
 
@@ -157,6 +175,7 @@ export async function userRoutes(app: FastifyInstance) {
     if (error) return renderForm(reply, { account: current, errors: { password: error } }, 400);
     await setPassword(app.db, current.id, password, true);
     deleteUserSessions(app.db, current.id);
+    logAudit(app.db, req, { action: 'password_reset', entity: 'user', entityId: current.id, label: `${current.display_name} (${current.username})` });
     return renderForm(reply, {
       account: current,
       errors: {},
@@ -170,6 +189,7 @@ export async function userRoutes(app: FastifyInstance) {
     const refused = guard(app.db, req.user!, current, 'delete');
     if (refused) return renderList(reply, { error: refused }, 400);
     deleteUser(app.db, current.id);
+    logAudit(app.db, req, { action: 'delete', entity: 'user', entityId: current.id, label: `${current.display_name} (${current.username})` });
     return renderList(reply, { success: `Le compte « ${current.username} » a été supprimé.` });
   });
 }

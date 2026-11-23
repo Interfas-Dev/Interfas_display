@@ -128,4 +128,26 @@ export const migrations: Migration[] = [
       ALTER TABLE users ADD COLUMN must_change_password INTEGER NOT NULL DEFAULT 0;
     `,
   },
+  {
+    version: 8,
+    name: 'historique',
+    sql: `
+      -- Journal des actions. username / label sont des instantanés : ils restent
+      -- lisibles si le compte ou l'élément est supprimé ensuite.
+      CREATE TABLE audit_log (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        at TEXT NOT NULL DEFAULT (datetime('now')),
+        user_id INTEGER REFERENCES users(id) ON DELETE SET NULL,
+        username TEXT NOT NULL DEFAULT '',
+        action TEXT NOT NULL,
+        entity TEXT NOT NULL,
+        entity_id INTEGER,
+        label TEXT NOT NULL DEFAULT '',
+        details TEXT NOT NULL DEFAULT '[]',
+        ip TEXT NOT NULL DEFAULT ''
+      );
+      CREATE INDEX audit_log_at ON audit_log(at);
+      CREATE INDEX audit_log_user ON audit_log(user_id);
+    `,
+  },
 ];

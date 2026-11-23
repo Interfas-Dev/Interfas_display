@@ -15,6 +15,7 @@ import {
   type MessageInput,
 } from '../content/messages.js';
 import { mediaExists } from '../content/media.js';
+import { diff, logAudit, yesNo, type FieldSpec } from '../audit.js';
 import { BRAND_COLORS, FONT_SIZES } from '../content/sanitize.js';
 import { getDefaultTemplate, getTemplate, listTemplates } from '../content/templates.js';
 import {
@@ -37,6 +38,31 @@ type FormMessage = Pick<
   | 'title' | 'heading' | 'content_html' | 'signature_name' | 'signature_role' | 'template_id' | 'is_active'
   | 'duration_seconds' | 'starts_at' | 'ends_at' | 'days_mask' | 'daily_start' | 'daily_end' | 'images_json'
 > & { id?: number };
+
+const TIME = (v: unknown) => (v ? String(v).replace('T', ' ') : '(aucune)');
+const DAYS = (v: unknown) => {
+  const mask = Number(v);
+  return mask === ALL_DAYS ? 'tous les jours' : DAY_LABELS.filter((_, i) => mask & (1 << i)).join(', ') || '(aucun)';
+};
+
+/** Champs suivis dans l'historique. Les deux côtés sont au format « ligne de messages ». */
+function messageSpecs(templateName: (id: unknown) => string): FieldSpec<FormMessage>[] {
+  return [
+    { label: 'Titre affiché', get: (m) => m.heading },
+    { label: 'Titre interne', get: (m) => m.title },
+    { label: 'Texte', get: (m) => m.content_html, format: null },
+    { label: 'Images', get: (m) => m.images_json, format: null },
+    { label: 'Template', get: (m) => m.template_id, format: templateName },
+    { label: 'Signature (nom)', get: (m) => m.signature_name },
+    { label: 'Signature (fonction)', get: (m) => m.signature_role },
+    { label: 'Diffusé', get: (m) => !!m.is_active, format: yesNo },
+    { label: 'Durée', get: (m) => m.duration_seconds, format: (v) => `${v} s` },
+    { label: 'Début', get: (m) => m.starts_at, format: TIME },
+    { label: 'Fin', get: (m) => m.ends_at, format: TIME },
+    { label: 'Jours', get: (m) => m.days_mask, format: DAYS },
+    { label: 'Plage horaire', get: (m) => (m.daily_start ? `${m.daily_start}–${m.daily_end}` : ''), format: (v) => String(v || '(toute la journée)') },
+  ];
+}
 
 function parseId(raw: string): number | null {
   const id = Number(raw);
@@ -69,6 +95,7 @@ export async function messageRoutes(app: FastifyInstance) {
 
   const templateExists = (id: number) => !!getTemplate(app.db, id);
   const imageExists = (file: string) => mediaExists(app.db, file);
+  const specs = messageSpecs((id) => (id ? getTemplate(app.db, Number(id))?.name ?? `#${id}` : '(aucun)'));
 
   const notFound = (reply: FastifyReply) =>
     reply.code(404).view('admin/not-found.ejs', { title: 'Introuvable', user: reply.request.user }, LAYOUT);
@@ -114,7 +141,8 @@ export async function messageRoutes(app: FastifyInstance) {
   app.post<{ Body: FormBody }>('/', async (req, reply) => {
     const { input, errors } = validateMessage(req.body ?? {}, templateExists, imageExists);
     if (Object.keys(errors).length) return renderForm(reply, { message: fromInput(input), errors }, 400);
-    createMessage(app.db, input, req.user!.id);
+    const newId = createMessage(app.db, input, req.user!.id);
+    logAudit(app.db, req, { action: 'create', entity: 'message', entityId: newId, label: input.title });
     return reply.redirect('/admin/messages', 303);
   });
 
@@ -127,29 +155,41 @@ export async function messageRoutes(app: FastifyInstance) {
 
   app.post<IdParams & { Body: FormBody }>('/:id', async (req, reply) => {
     const id = parseId(req.params.id);
-    if (!id || !getMessage(app.db, id)) return notFound(reply);
+    const before = id ? getMessage(app.db, id) : undefined;
+    if (!id || !before) return notFound(reply);
     const { input, errors } = validateMessage(req.body ?? {}, templateExists, imageExists);
     if (Object.keys(errors).length) return renderForm(reply, { message: fromInput(input, id), errors }, 400);
     updateMessage(app.db, id, input, req.user!.id);
+    const changes = diff<FormMessage>(before, fromInput(input, id), specs);
+    if (changes.length) logAudit(app.db, req, { action: 'update', entity: 'message', entityId: id, label: input.title, details: changes });
     return reply.redirect('/admin/messages', 303);
   });
 
   app.post<IdParams & { Body: { active?: string } }>('/:id/toggle', async (req, reply) => {
     const id = parseId(req.params.id);
-    if (!id || !setMessageActive(app.db, id, req.body?.active === '1', req.user!.id)) return notFound(reply);
+    const active = req.body?.active === '1';
+    if (!id || !setMessageActive(app.db, id, active, req.user!.id)) return notFound(reply);
+    logAudit(app.db, req, { action: active ? 'enable' : 'disable', entity: 'message', entityId: id, label: getMessage(app.db, id)?.title });
     return reply.redirect('/admin/messages', 303);
   });
 
   app.post<IdParams & { Body: { direction?: string } }>('/:id/move', async (req, reply) => {
     const id = parseId(req.params.id);
     if (!id) return notFound(reply);
-    moveMessage(app.db, id, req.body?.direction === 'up' ? 'up' : 'down');
+    const direction = req.body?.direction === 'up' ? 'up' : 'down';
+    moveMessage(app.db, id, direction);
+    const moved = getMessage(app.db, id);
+    if (moved) {
+      logAudit(app.db, req, { action: 'move', entity: 'message', entityId: id, label: moved.title, details: [direction === 'up' ? 'Monté d’un cran' : 'Descendu d’un cran'] });
+    }
     return reply.redirect('/admin/messages', 303);
   });
 
   app.post<IdParams>('/:id/delete', async (req, reply) => {
     const id = parseId(req.params.id);
-    if (!id || !deleteMessage(app.db, id)) return notFound(reply);
+    const gone = id ? getMessage(app.db, id) : undefined;
+    if (!id || !gone || !deleteMessage(app.db, id)) return notFound(reply);
+    logAudit(app.db, req, { action: 'delete', entity: 'message', entityId: id, label: gone.title });
     return reply.redirect('/admin/messages', 303);
   });
 }

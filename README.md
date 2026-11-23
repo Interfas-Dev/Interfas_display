@@ -78,6 +78,28 @@ Points d'attention :
 
 La base SQLite est stockée dans le volume Docker `interfas-data` (préfixé par le nom du dossier, à sauvegarder). C'est le même que dans la première version : un `docker compose up -d --build` dans le même dossier conserve les comptes et les messages.
 
+## Sauvegardes
+
+Chaque jour à 3 h (`BACKUP_TIME`, heure de l'atelier), l'application copie à chaud la base SQLite et les images dans un dossier daté de `./backups` sur le serveur (monté dans le conteneur sur `/app/backups`). On garde les 7 derniers jours et une sauvegarde par semaine sur 4 semaines. Paramètres › Sauvegardes liste les sauvegardes et propose « Sauvegarder maintenant ».
+
+Le conteneur tourne avec l'utilisateur `node` (UID 1000) : avant le premier lancement, créer le dossier avec les bons droits.
+
+```bash
+mkdir -p backups && sudo chown 1000:1000 backups
+```
+
+Restauration (remplacer DOSSIER par le nom de la sauvegarde, par ex. `2026-11-24_03-00-00`) :
+
+```bash
+docker compose stop app
+docker compose run --rm --no-deps app sh -c "rm -rf /app/data/interfas.db-wal /app/data/interfas.db-shm /app/data/media && cp -r /app/backups/DOSSIER/. /app/data/"
+docker compose start app
+```
+
+## Historique
+
+Paramètres › Historique (administrateurs) liste qui a fait quoi : messages, templates, comptes, connexions et échecs de connexion, sauvegardes manuelles. Pour une modification, les champs changés sont indiqués. Conservé un an.
+
 ## Structure
 
 ```
