@@ -1,0 +1,71 @@
+<div class="page-head">
+  <h1><%= title %></h1>
+  <a href="/admin/messages">← Retour aux messages</a>
+</div>
+
+<form method="post" action="/admin/messages<%= message.id ? '/' + message.id : '' %>" class="message-form" id="message-form">
+  <div class="editor-col">
+    <label class="field">Titre (interne, non affiché à l'écran)
+      <input name="title" value="<%= message.title %>" maxlength="<%= titleMax %>" required>
+      <% if (errors.title) { %><span class="field-error"><%= errors.title %></span><% } %>
+    </label>
+
+    <div class="field">
+      <span>Contenu</span>
+      <div class="editor" data-font-sizes="<%= JSON.stringify(fontSizes) %>">
+        <div class="toolbar" role="toolbar" aria-label="Mise en forme" hidden>
+          <select data-cmd="block" aria-label="Style de paragraphe">
+            <option value="p">Texte</option>
+            <option value="h1">Titre 1</option>
+            <option value="h2">Titre 2</option>
+            <option value="h3">Titre 3</option>
+          </select>
+          <select data-cmd="fontSize" aria-label="Taille du texte">
+            <option value="">Taille</option>
+            <% fontSizes.forEach((s) => { %><option value="<%= s %>"><%= Math.round(parseFloat(s) * 100) %> %</option><% }) %>
+          </select>
+          <span class="sep"></span>
+          <button type="button" data-cmd="bold" title="Gras"><b>G</b></button>
+          <button type="button" data-cmd="italic" title="Italique"><i>I</i></button>
+          <button type="button" data-cmd="underline" title="Souligné"><u>S</u></button>
+          <button type="button" data-cmd="strike" title="Barré"><s>B</s></button>
+          <span class="sep"></span>
+          <label class="color" title="Couleur du texte">A<input type="color" data-cmd="color" value="#ffffff"></label>
+          <label class="color highlight" title="Surlignage">▮<input type="color" data-cmd="highlight" value="#f5c518"></label>
+          <button type="button" data-cmd="clearColor" title="Retirer couleurs et surlignage">⌫</button>
+          <span class="sep"></span>
+          <button type="button" data-cmd="alignLeft" title="Aligner à gauche">⯇</button>
+          <button type="button" data-cmd="alignCenter" title="Centrer">≡</button>
+          <button type="button" data-cmd="alignRight" title="Aligner à droite">⯈</button>
+          <span class="sep"></span>
+          <button type="button" data-cmd="bulletList" title="Liste à puces">•</button>
+          <button type="button" data-cmd="orderedList" title="Liste numérotée">1.</button>
+          <span class="sep"></span>
+          <button type="button" data-cmd="undo" title="Annuler">↶</button>
+          <button type="button" data-cmd="redo" title="Rétablir">↷</button>
+        </div>
+        <div class="editor-surface" id="editor"></div>
+        <noscript><p class="field-error">L'éditeur nécessite JavaScript.</p></noscript>
+      </div>
+      <input type="hidden" name="content" id="content" value="<%= message.content_html %>">
+      <% if (errors.content) { %><span class="field-error"><%= errors.content %></span><% } %>
+    </div>
+
+    <label class="checkbox">
+      <input type="checkbox" name="is_active" value="on" <%= message.is_active ? 'checked' : '' %>>
+      Diffuser ce message à l'écran
+    </label>
+
+    <div class="form-actions">
+      <button type="submit" class="btn primary">Enregistrer</button>
+      <a class="btn" href="/admin/messages">Annuler</a>
+    </div>
+  </div>
+
+  <aside class="preview-col">
+    <h2>Aperçu à l'écran</h2>
+    <div class="screen-preview"><div class="message-body" id="preview"><%- message.content_html %></div></div>
+    <p class="muted small">Aperçu en 16:9. Les tailles s'adaptent à la résolution réelle de l'écran.</p>
+  </aside>
+</form>
+<script type="module" src="/public/build/editor.js"></script>

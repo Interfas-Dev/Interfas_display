@@ -6,6 +6,8 @@ COPY package*.json ./
 RUN npm ci
 COPY tsconfig.json ./
 COPY src ./src
+COPY client ./client
+COPY public ./public
 RUN npm run build && npm prune --omit=dev
 
 # --- Exécution ---
@@ -19,7 +21,7 @@ COPY --from=build /app/node_modules ./node_modules
 COPY --from=build /app/dist ./dist
 COPY package.json ./
 COPY views ./views
-COPY public ./public
+COPY --from=build /app/public ./public
 RUN mkdir -p /app/data && chown -R node:node /app/data
 USER node
 EXPOSE 3000

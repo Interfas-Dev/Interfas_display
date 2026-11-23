@@ -5,10 +5,16 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title><%= title %> · Interfas Display</title>
   <link rel="stylesheet" href="/public/css/admin.css">
+  <link rel="stylesheet" href="/public/css/message.css">
 </head>
 <body>
   <header class="topbar">
-    <a class="brand" href="/admin">Interfas Display</a>
+    <div class="topbar-left">
+      <a class="brand" href="/admin">Interfas Display</a>
+      <% if (locals.user) { %>
+        <nav class="main-nav"><a href="/admin/messages">Messages</a></nav>
+      <% } %>
+    </div>
     <nav>
       <a href="/display" target="_blank" rel="noopener">Ouvrir l'écran</a>
       <% if (locals.user) { %>
@@ -22,5 +28,6 @@
   <main class="container">
     <%- body %>
   </main>
+  <script src="/public/js/admin.js"></script>
 </body>
 </html>
