@@ -1,13 +1,4 @@
-<div class="stage">
-  <% if (messages.length === 0) { %>
-    <div class="slide active">
-      <div class="empty">
-        <h1>Interfas</h1>
-        <p>Aucun message à afficher pour le moment.</p>
-      </div>
-    </div>
-  <% } %>
-  <% messages.forEach((m, i) => { %>
-    <div class="slide<%= i === 0 ? ' active' : '' %>" data-duration="<%= m.duration_seconds %>"><%- include('../partials/slide', { m }) %></div>
-  <% }) %>
+<div class="stage" id="stage">
+  <%- include('slides', { messages }) %>
 </div>
+<div class="connection" id="connection" hidden>Connexion au serveur perdue, nouvelle tentative…</div>

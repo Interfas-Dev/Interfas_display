@@ -12,3 +12,10 @@ body { font-family: var(--font-brand); cursor: none; }
 .empty { height: 100%; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; color: var(--brand-white); }
 .empty h1 { font-size: clamp(2rem, 7vw, 9rem); font-weight: 700; margin: 0 0 2vh; color: var(--brand-red); }
 .empty p { font-size: clamp(1rem, 2.5vw, 3.5rem); margin: 0; color: var(--brand-beige); }
+.connection {
+  position: fixed; left: 50%; bottom: 2vh; transform: translateX(-50%);
+  padding: 0.6vh 1.2vw; border-radius: 8px;
+  background: rgba(34, 27, 19, 0.85); color: var(--brand-white);
+  font-size: clamp(0.75rem, 1vw, 1.2rem);
+}
+.connection::before { content: '⚠ '; }
