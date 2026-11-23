@@ -1,6 +1,10 @@
 <h1>Mon compte</h1>
 <p class="muted">Connecté en tant que <strong><%= user.username %></strong>.</p>
 
+<% if (user.must_change_password) { %>
+  <p class="alert wait" role="status">Ton mot de passe est provisoire : choisis-en un nouveau pour accéder à l'administration.</p>
+<% } %>
+
 <section class="card">
   <h2>Changer le mot de passe</h2>
   <% if (error) { %><p class="alert error" role="alert"><%= error %></p><% } %>

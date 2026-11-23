@@ -32,7 +32,14 @@ export async function accountRoutes(app: FastifyInstance) {
       return reply.code(400).view('admin/account.ejs', { title: 'Mon compte', user, error, success: null }, LAYOUT);
     }
 
+    if (password === current) {
+      return reply
+        .code(400)
+        .view('admin/account.ejs', { title: 'Mon compte', user, error: 'Choisis un mot de passe différent de l’actuel.', success: null }, LAYOUT);
+    }
+
     await setPassword(app.db, user.id, password);
+    user.must_change_password = 0;
     // Déconnecte les autres appareils, garde la session en cours.
     deleteOtherSessions(app.db, user.id, req.sessionId!);
     return reply.view(

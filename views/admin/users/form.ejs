@@ -1,0 +1,67 @@
+<div class="page-head">
+  <h1><%= title %></h1>
+  <a href="/admin/users">← Retour aux utilisateurs</a>
+</div>
+
+<% if (success) { %><p class="alert success" role="status"><%= success %></p><% } %>
+<% if (errors.account) { %><p class="alert error" role="alert"><%= errors.account %></p><% } %>
+
+<div class="user-forms">
+  <section class="card">
+    <h2><%= account.id ? 'Compte' : 'Nouveau compte' %></h2>
+    <form method="post" action="/admin/users<%= account.id ? '/' + account.id : '' %>" class="form">
+      <% if (account.id) { %>
+        <p class="muted">Identifiant : <code><%= account.username %></code></p>
+      <% } else { %>
+        <label>Identifiant
+          <input name="username" value="<%= account.username %>" autocomplete="off" required pattern="[A-Za-z0-9._\-]{3,32}">
+          <span class="hint">3 à 32 caractères : lettres, chiffres, point, tiret, tiret bas.</span>
+          <% if (errors.username) { %><span class="field-error"><%= errors.username %></span><% } %>
+        </label>
+      <% } %>
+      <label>Nom affiché
+        <input name="display_name" value="<%= account.display_name %>" maxlength="<%= displayNameMax %>" placeholder="Ex. Marie Dupont">
+        <% if (errors.display_name) { %><span class="field-error"><%= errors.display_name %></span><% } %>
+      </label>
+      <fieldset class="field-group">
+        <legend>Rôle</legend>
+        <% roles.forEach((r) => { %>
+          <label class="radio"><input type="radio" name="role" value="<%= r.value %>" <%= account.role === r.value ? 'checked' : '' %> <%= isSelf ? 'disabled' : '' %>>
+            <%= r.label %> <span class="muted small"><%= r.value === 'admin' ? '· messages, templates et comptes' : '· messages uniquement' %></span></label>
+        <% }) %>
+        <% if (isSelf) { %><input type="hidden" name="role" value="<%= account.role %>"><span class="hint">Tu ne peux pas changer ton propre rôle.</span><% } %>
+      </fieldset>
+      <% if (account.id) { %>
+        <label class="checkbox">
+          <input type="checkbox" name="is_active" value="on" <%= account.is_active ? 'checked' : '' %> <%= isSelf ? 'disabled' : '' %>>
+          Compte actif (décocher ferme aussitôt ses sessions)
+        </label>
+        <% if (isSelf) { %><input type="hidden" name="is_active" value="on"><% } %>
+      <% } else { %>
+        <label>Mot de passe provisoire
+          <input name="password" type="text" autocomplete="off" minlength="10" required>
+          <span class="hint">10 caractères minimum. À transmettre à la personne : il lui sera demandé de le changer à sa première connexion.</span>
+          <% if (errors.password) { %><span class="field-error"><%= errors.password %></span><% } %>
+        </label>
+      <% } %>
+      <div class="form-actions">
+        <button type="submit" class="btn primary"><%= account.id ? 'Enregistrer' : 'Créer le compte' %></button>
+        <a class="btn" href="/admin/users">Annuler</a>
+      </div>
+    </form>
+  </section>
+
+  <% if (account.id && !isSelf) { %>
+    <section class="card">
+      <h2>Réinitialiser le mot de passe</h2>
+      <form method="post" action="/admin/users/<%= account.id %>/password" class="form">
+        <label>Nouveau mot de passe provisoire
+          <input name="password" type="text" autocomplete="off" minlength="10" required>
+          <% if (errors.password) { %><span class="field-error"><%= errors.password %></span><% } %>
+        </label>
+        <button type="submit" class="btn align-start">Réinitialiser</button>
+      </form>
+      <p class="muted small">Ses sessions en cours sont fermées, et un nouveau mot de passe lui sera demandé à la prochaine connexion.</p>
+    </section>
+  <% } %>
+</div>

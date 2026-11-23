@@ -117,4 +117,15 @@ export const migrations: Migration[] = [
       ALTER TABLE messages ADD COLUMN images_json TEXT NOT NULL DEFAULT '[]';
     `,
   },
+  {
+    version: 7,
+    name: 'roles_utilisateurs',
+    sql: `
+      -- admin : tout ; editor : messages uniquement. Les comptes existants restent admin.
+      ALTER TABLE users ADD COLUMN role TEXT NOT NULL DEFAULT 'admin' CHECK (role IN ('admin', 'editor'));
+      ALTER TABLE users ADD COLUMN is_active INTEGER NOT NULL DEFAULT 1;
+      -- Mot de passe provisoire donné par un admin : à changer à la prochaine connexion.
+      ALTER TABLE users ADD COLUMN must_change_password INTEGER NOT NULL DEFAULT 0;
+    `,
+  },
 ];

@@ -38,14 +38,21 @@ L'écran se met à jour en temps réel (Server-Sent Events sur `/display/events`
 
 ## Comptes utilisateurs
 
-Il n'y a pas d'inscription publique. Les comptes sont créés en ligne de commande :
+Il n'y a pas d'inscription publique. Le premier compte (administrateur) se crée en ligne de commande :
 
 ```bash
 npm run user:create -- matthias "Matthias"                                   # en dev
 docker compose exec app node dist/cli/create-user.js matthias "Matthias"    # en Docker
 ```
 
-Le mot de passe (10 caractères minimum) est demandé de façon masquée. Chacun peut ensuite le changer depuis « Mon compte » dans l'admin.
+Les comptes suivants se gèrent dans **Paramètres › Utilisateurs** (administrateurs uniquement) : création avec un mot de passe provisoire à changer à la première connexion, changement de rôle, désactivation (ferme aussitôt les sessions), réinitialisation du mot de passe, suppression (les messages sont conservés).
+
+| Rôle | Messages | Templates | Utilisateurs |
+| --- | --- | --- | --- |
+| Éditeur | ✓ | | |
+| Administrateur | ✓ | ✓ | ✓ |
+
+On ne peut ni se rétrograder, ni se désactiver, ni se supprimer soi-même, et il reste toujours au moins un administrateur actif. Chacun change son mot de passe depuis « Mon compte ».
 
 ## Déploiement (Docker + Traefik)
 

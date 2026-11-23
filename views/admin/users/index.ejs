@@ -1,0 +1,38 @@
+<%- include('../../partials/settings-tabs', { active: 'users' }) %>
+<div class="page-head">
+  <div>
+    <h1>Paramètres · Utilisateurs</h1>
+    <p class="muted">Les <strong>éditeurs</strong> gèrent les messages. Les <strong>administrateurs</strong> gèrent aussi les templates et les comptes.</p>
+  </div>
+  <a class="btn primary" href="/admin/users/new">Nouvel utilisateur</a>
+</div>
+
+<% if (locals.error) { %><p class="alert error" role="alert"><%= error %></p><% } %>
+<% if (locals.success) { %><p class="alert success" role="status"><%= success %></p><% } %>
+
+<table class="user-table">
+  <thead>
+    <tr><th>Nom</th><th>Identifiant</th><th>Rôle</th><th>État</th><th>Dernière connexion</th><th><span class="sr-only">Actions</span></th></tr>
+  </thead>
+  <tbody>
+    <% users.forEach((u) => { const self = u.id === user.id; %>
+      <tr class="<%= u.is_active ? '' : 'is-inactive' %>">
+        <td data-label="Nom"><a href="/admin/users/<%= u.id %>/edit"><%= u.display_name %></a><% if (self) { %> <span class="muted small">(toi)</span><% } %></td>
+        <td data-label="Identifiant"><code><%= u.username %></code></td>
+        <td data-label="Rôle"><span class="badge neutral"><%= roleLabels[u.role] %></span></td>
+        <td data-label="État">
+          <% if (!u.is_active) { %><span class="badge status-disabled">Désactivé</span>
+          <% } else if (u.must_change_password) { %><span class="badge status-scheduled">Mot de passe provisoire</span>
+          <% } else { %><span class="badge status-live">Actif</span><% } %>
+        </td>
+        <td data-label="Dernière connexion" class="muted small"><%= u.last_login_at ? new Date(u.last_login_at.replace(' ', 'T') + 'Z').toLocaleString('fr-FR', { timeZone: 'Europe/Paris', dateStyle: 'short', timeStyle: 'short' }) : 'Jamais' %></td>
+        <td class="message-actions">
+          <a class="btn" href="/admin/users/<%= u.id %>/edit">Modifier</a>
+          <form method="post" action="/admin/users/<%= u.id %>/delete" class="inline" data-confirm="Supprimer le compte « <%= u.username %> » ? Ses messages sont conservés.">
+            <button class="btn danger" <%= self ? 'disabled title="Tu ne peux pas supprimer ton propre compte"' : '' %>>Supprimer</button>
+          </form>
+        </td>
+      </tr>
+    <% }) %>
+  </tbody>
+</table>

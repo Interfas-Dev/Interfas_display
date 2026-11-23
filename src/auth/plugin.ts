@@ -12,6 +12,8 @@ declare module 'fastify' {
   }
   interface FastifyInstance {
     requireAuth: (req: FastifyRequest, reply: FastifyReply) => Promise<void>;
+    /** À placer après requireAuth : réserve la route aux administrateurs. */
+    requireAdmin: (req: FastifyRequest, reply: FastifyReply) => Promise<void>;
   }
 }
 
@@ -46,6 +48,22 @@ async function authPlugin(app: FastifyInstance) {
     if (!req.user) {
       const next = encodeURIComponent(req.url);
       return reply.redirect(`/admin/login?next=${next}`);
+    }
+    // Mot de passe provisoire : seul « Mon compte » reste accessible jusqu'au changement.
+    if (req.user.must_change_password && !req.url.startsWith('/admin/account')) {
+      return reply.redirect('/admin/account');
+    }
+  });
+
+  app.decorate('requireAdmin', async (req: FastifyRequest, reply: FastifyReply) => {
+    if (req.user?.role !== 'admin') {
+      return reply
+        .code(403)
+        .view(
+          'admin/forbidden.ejs',
+          { title: 'Accès réservé', user: req.user },
+          { layout: 'partials/layout.ejs' },
+        );
     }
   });
 
