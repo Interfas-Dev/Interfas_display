@@ -1,17 +1,48 @@
+# =====================================================================
+# Interfas Display — affichage atelier
+# URL      : https://${DISPLAY_HOST} (LAN + VPN uniquement, via Traefik v2.11)
+# Réseau   : "proxy" (externe, Traefik). Aucun port publié sur l'hôte.
+# Volume   : interfas-data (base SQLite) — À SAUVEGARDER
+# =====================================================================
 services:
   app:
     build: .
-    container_name: interfas-display
+    image: interfas-display:latest
     restart: unless-stopped
-    ports:
-      - "3000:3000"
-    env_file:
-      - .env
+    env_file: [.env]
     environment:
       NODE_ENV: production
       DATABASE_PATH: /app/data/interfas.db
+      TZ: Europe/Paris
+      COOKIE_SECURE: "true"      # TLS terminé par Traefik : cookie de session HTTPS uniquement
+      TRUST_PROXY: "true"        # vraie IP du client via X-Forwarded-For (limite de connexions)
     volumes:
       - interfas-data:/app/data
-
+    networks:
+      - proxy
+    mem_limit: 256m
+    labels:
+      - traefik.enable=true
+      - traefik.docker.network=proxy
+      # Routeur HTTPS — certificat wildcard servi par le file provider (tls.yml)
+      - traefik.http.routers.display.rule=Host(`${DISPLAY_HOST:?Renseigne DISPLAY_HOST dans .env}`)
+      - traefik.http.routers.display.entrypoints=${TRAEFIK_EP_HTTPS:?Renseigne TRAEFIK_EP_HTTPS dans .env}
+      - traefik.http.routers.display.tls=true
+      - traefik.http.routers.display.service=display
+      - traefik.http.routers.display.middlewares=display-lan
+      - traefik.http.services.display.loadbalancer.server.port=3000
+      # Filtrage IP : LAN + VPN uniquement (inclure l'IP de l'écran d'affichage)
+      - traefik.http.middlewares.display-lan.ipallowlist.sourcerange=${DISPLAY_ALLOWED_IPS:?Renseigne DISPLAY_ALLOWED_IPS dans .env}
+      # Routeur HTTP -> redirection vers HTTPS
+      - traefik.http.routers.display-http.rule=Host(`${DISPLAY_HOST}`)
+      - traefik.http.routers.display-http.entrypoints=${TRAEFIK_EP_HTTP:?Renseigne TRAEFIK_EP_HTTP dans .env}
+      - traefik.http.routers.display-http.middlewares=display-https
+      - traefik.http.middlewares.display-https.redirectscheme.scheme=https
+      - traefik.http.middlewares.display-https.redirectscheme.permanent=true
+      # Pas de middleware compress / buffering : le flux temps réel (SSE)
+      # de /display/events doit passer tel quel.
+networks:
+  proxy:
+    external: true               # réseau existant de Traefik
 volumes:
-  interfas-data:
+  interfas-data:                 # même volume que la première version : les données sont conservées
