@@ -1,0 +1,33 @@
+<div class="page-head">
+  <div>
+    <h1>Paramètres · Templates</h1>
+    <p class="muted">Un template fixe l'apparence des messages : thème, cadre, logo et signature par défaut. Le modifier met à jour tous les messages qui l'utilisent.</p>
+  </div>
+  <a class="btn primary" href="/admin/templates/new">Nouveau template</a>
+</div>
+
+<% if (error) { %><p class="alert error" role="alert"><%= error %></p><% } %>
+
+<ul class="template-grid">
+  <% templates.forEach((t) => { %>
+    <li class="template-card">
+      <a class="thumb" href="/admin/templates/<%= t.id %>/edit" aria-label="Modifier <%= t.name %>">
+        <div class="screen-preview"><%- include('../../partials/slide', { m: { ...sample, theme: t.theme, frame: t.frame, show_logo: t.show_logo,
+          sig_name: t.default_signature_name || sample.signature_name, sig_role: t.default_signature_role || sample.signature_role } }) %></div>
+      </a>
+      <div class="template-info">
+        <div class="message-title">
+          <a href="/admin/templates/<%= t.id %>/edit"><%= t.name %></a>
+          <% if (t.is_default) { %><span class="badge neutral">★ Par défaut</span><% } %>
+        </div>
+        <p class="muted small">Utilisé par <%= t.usage_count %> message<%= t.usage_count > 1 ? 's' : '' %></p>
+      </div>
+      <div class="message-actions">
+        <a class="btn" href="/admin/templates/<%= t.id %>/edit">Modifier</a>
+        <form method="post" action="/admin/templates/<%= t.id %>/delete" class="inline" data-confirm="Supprimer le template « <%= t.name %> » ?">
+          <button class="btn danger" <%= t.usage_count > 0 ? 'disabled title="Utilisé par des messages"' : '' %>>Supprimer</button>
+        </form>
+      </div>
+    </li>
+  <% }) %>
+</ul>

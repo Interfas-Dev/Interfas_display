@@ -13,7 +13,13 @@ beforeAll(async () => {
 });
 afterAll(async () => app.close());
 
+let tid = '';
+beforeAll(() => {
+  tid = String((app.db.prepare('SELECT id FROM templates WHERE is_default = 1').get() as { id: number }).id);
+});
+
 async function post(url: string, data: Record<string, string>) {
+  if ((url === '/admin/messages' || /\/admin\/messages\/\d+$/.test(url)) && !('template_id' in data)) data = { template_id: tid, ...data };
   const f = form(data);
   return app.inject({ method: 'POST', url, headers: { ...f.headers, cookie }, payload: f.payload });
 }
@@ -50,11 +56,34 @@ describe('messages', () => {
     expect(display.body).not.toContain('Aucun message');
   });
 
-  it('refuse un titre ou un contenu vide', async () => {
-    const res = await post('/admin/messages', { title: '', content: '<p>   </p>' });
+  it('refuse un message vide', async () => {
+    const res = await post('/admin/messages', { title: '', heading: '', content: '<p>   </p>' });
     expect(res.statusCode).toBe(400);
-    expect(res.body).toContain('Le titre est obligatoire');
-    expect(res.body).toContain('ne peut pas être vide');
+    expect(res.body).toContain('Donne au moins un titre');
+    expect(res.body).toContain('Le message est vide');
+  });
+
+  it('refuse un template inexistant', async () => {
+    const res = await post('/admin/messages', { title: 'x', content: '<p>x</p>', template_id: '999' });
+    expect(res.statusCode).toBe(400);
+    expect(res.body).toContain('Choisis un template');
+  });
+
+  it('affiche titre, signature et template à l’écran', async () => {
+    await post('/admin/messages', {
+      heading: 'FORMATION HOROQUARTZ',
+      content: '<p>Le <u>jeudi 15 octobre</u></p>',
+      signature_name: 'Prénom NOM',
+      signature_role: 'Responsable RH',
+      is_active: 'on',
+    });
+    const display = await app.inject({ method: 'GET', url: '/display' });
+    expect(display.body).toContain('FORMATION HOROQUARTZ');
+    expect(display.body).toContain('Responsable RH');
+    expect(display.body).toContain('theme-light');
+    const m = listMessages(app.db).find((x) => x.heading === 'FORMATION HOROQUARTZ')!;
+    expect(m.title).toBe('FORMATION HOROQUARTZ'); // titre interne repris du titre affiché
+    await post(`/admin/messages/${m.id}/delete`, {});
   });
 
   it('modifie un message', async () => {

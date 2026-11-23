@@ -8,39 +8,57 @@ import {
   setMessageActive,
   updateMessage,
   validateMessage,
+  HEADING_MAX,
+  SIGNATURE_MAX,
   TITLE_MAX,
+  type Message,
+  type MessageInput,
 } from '../content/messages.js';
 import { BRAND_COLORS, FONT_SIZES } from '../content/sanitize.js';
+import { getDefaultTemplate, getTemplate, listTemplates } from '../content/templates.js';
 
 const LAYOUT = { layout: 'partials/layout.ejs' };
 type IdParams = { Params: { id: string } };
-type FormBody = { title?: string; content?: string; is_active?: string };
+type FormBody = Record<string, string | undefined>;
+type FormMessage = Pick<Message, 'title' | 'heading' | 'content_html' | 'signature_name' | 'signature_role' | 'template_id' | 'is_active'> & { id?: number };
 
 function parseId(raw: string): number | null {
   const id = Number(raw);
   return Number.isInteger(id) && id > 0 ? id : null;
 }
 
+function fromInput(input: MessageInput, id?: number): FormMessage {
+  return {
+    id,
+    title: input.title,
+    heading: input.heading,
+    content_html: input.contentHtml,
+    signature_name: input.signatureName,
+    signature_role: input.signatureRole,
+    template_id: input.templateId,
+    is_active: input.isActive ? 1 : 0,
+  };
+}
+
 /** Gestion des messages : liste, ajout, modification, suppression, ordre. */
 export async function messageRoutes(app: FastifyInstance) {
   app.addHook('preHandler', app.requireAuth);
 
+  const templateExists = (id: number) => !!getTemplate(app.db, id);
+
   const notFound = (reply: FastifyReply) =>
     reply.code(404).view('admin/not-found.ejs', { title: 'Introuvable', user: reply.request.user }, LAYOUT);
 
-  const renderForm = (
-    reply: FastifyReply,
-    data: { message: { id?: number; title: string; content_html: string; is_active: number }; errors: Record<string, string> },
-    code = 200,
-  ) =>
+  const renderForm = (reply: FastifyReply, data: { message: FormMessage; errors: Record<string, string> }, code = 200) =>
     reply.code(code).view(
       'admin/messages/form.ejs',
       {
         title: data.message.id ? 'Modifier le message' : 'Nouveau message',
         user: reply.request.user,
-        titleMax: TITLE_MAX,
+        limits: { title: TITLE_MAX, heading: HEADING_MAX, signature: SIGNATURE_MAX },
         fontSizes: FONT_SIZES,
         brandColors: BRAND_COLORS,
+        templates: listTemplates(app.db),
         ...data,
       },
       LAYOUT,
@@ -51,14 +69,18 @@ export async function messageRoutes(app: FastifyInstance) {
   );
 
   app.get('/new', async (_req, reply) =>
-    renderForm(reply, { message: { title: '', content_html: '', is_active: 1 }, errors: {} }),
+    renderForm(reply, {
+      message: {
+        title: '', heading: '', content_html: '', signature_name: '', signature_role: '',
+        template_id: getDefaultTemplate(app.db)?.id ?? null, is_active: 1,
+      },
+      errors: {},
+    }),
   );
 
   app.post<{ Body: FormBody }>('/', async (req, reply) => {
-    const { input, errors } = validateMessage(req.body ?? {});
-    if (Object.keys(errors).length) {
-      return renderForm(reply, { message: { title: input.title, content_html: input.contentHtml, is_active: input.isActive ? 1 : 0 }, errors }, 400);
-    }
+    const { input, errors } = validateMessage(req.body ?? {}, templateExists);
+    if (Object.keys(errors).length) return renderForm(reply, { message: fromInput(input), errors }, 400);
     createMessage(app.db, input, req.user!.id);
     return reply.redirect('/admin/messages', 303);
   });
@@ -73,10 +95,8 @@ export async function messageRoutes(app: FastifyInstance) {
   app.post<IdParams & { Body: FormBody }>('/:id', async (req, reply) => {
     const id = parseId(req.params.id);
     if (!id || !getMessage(app.db, id)) return notFound(reply);
-    const { input, errors } = validateMessage(req.body ?? {});
-    if (Object.keys(errors).length) {
-      return renderForm(reply, { message: { id, title: input.title, content_html: input.contentHtml, is_active: input.isActive ? 1 : 0 }, errors }, 400);
-    }
+    const { input, errors } = validateMessage(req.body ?? {}, templateExists);
+    if (Object.keys(errors).length) return renderForm(reply, { message: fromInput(input, id), errors }, 400);
     updateMessage(app.db, id, input, req.user!.id);
     return reply.redirect('/admin/messages', 303);
   });

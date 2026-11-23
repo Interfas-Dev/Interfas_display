@@ -8,8 +8,6 @@
     </div>
   <% } %>
   <% messages.forEach((m, i) => { %>
-    <div class="slide<%= i === 0 ? ' active' : '' %>">
-      <div class="message-body"><%- m.content_html %></div>
-    </div>
+    <div class="slide<%= i === 0 ? ' active' : '' %>"><%- include('../partials/slide', { m }) %></div>
   <% }) %>
 </div>

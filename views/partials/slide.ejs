@@ -1,0 +1,13 @@
+<%# Rendu d'un message dans son template. Variable attendue : m %>
+<% const hasSig = m.sig_name || m.sig_role; %>
+<div class="slide-frame theme-<%= m.theme %> frame-<%= m.frame %>" data-slide>
+  <header class="slide-head"<%= (!m.show_logo && !m.heading) ? ' hidden' : '' %>>
+    <div class="slide-logo" aria-label="INTERFAS"<%= m.show_logo ? '' : ' hidden' %>>INTERFAS</div>
+    <h1 class="slide-heading"<%= m.heading ? '' : ' hidden' %>><%= m.heading %></h1>
+  </header>
+  <div class="message-body slide-body"><%- m.content_html %></div>
+  <div class="slide-signature"<%= hasSig ? '' : ' hidden' %>>
+    <span class="sig-name"><%= m.sig_name %></span>
+    <span class="sig-role"><%= m.sig_role %></span>
+  </div>
+</div>

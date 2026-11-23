@@ -29,6 +29,7 @@ a:hover { text-decoration-color: var(--accent); }
 /* Simple pastille rouge : pas de logo (la charte n'en autorise pas de nouveau). */
 .brand::before { content: ''; width: 0.7rem; height: 0.7rem; border-radius: 2px; background: var(--accent); }
 .main-nav a, .topbar nav a { color: var(--text); text-decoration: none; }
+.main-nav { display: flex; gap: 1.25rem; }
 .main-nav a { font-weight: 700; }
 .main-nav a:hover, .topbar nav a:hover { text-decoration: underline; text-decoration-color: var(--accent); }
 .topbar nav { display: flex; align-items: center; gap: 1.25rem; }
@@ -170,3 +171,32 @@ body.auth { min-height: 100vh; display: flex; align-items: center; justify-conte
 .editor-surface { background: var(--brand-black); }
 .editor-surface .message-body { --message-base: 1.25rem; min-height: 260px; padding: 1rem 1.25rem; outline: none; }
 .editor-surface .message-body:focus { box-shadow: inset 0 0 0 2px var(--accent); }
+
+/* --- Champs complémentaires --- */
+.field > select, .field > input:not([type=checkbox]):not([type=radio]) {
+  padding: 0.6rem 0.75rem;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--brand-white);
+  color: var(--text);
+  font: inherit; font-weight: 400;
+}
+.field-group { border: 1px solid var(--border); border-radius: var(--radius); padding: 0.75rem 1rem 1rem; margin: 0; display: flex; flex-direction: column; gap: 0.5rem; }
+.field-group legend { font-weight: 700; font-size: 0.95rem; padding: 0 0.3rem; }
+.field-row { display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem; }
+@media (max-width: 600px) { .field-row { grid-template-columns: 1fr; } }
+.hint { font-size: 0.85rem; font-weight: 400; color: var(--text-muted); margin: 0; }
+.radio { display: flex; align-items: center; gap: 0.5rem; font-weight: 400; }
+.radio input { accent-color: var(--brand-black); width: 1.05rem; height: 1.05rem; }
+.badge.neutral { background: var(--state-neutral-bg); color: var(--text); }
+
+/* --- Grille des templates --- */
+.template-grid { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 1rem; }
+.template-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 0.75rem; display: flex; flex-direction: column; gap: 0.75rem; }
+.template-card .message-actions { justify-content: flex-start; }
+.template-info p { margin: 0.2rem 0 0; }
+
+/* La zone d'édition suit le thème du template choisi. */
+.editor-surface { background: var(--slide-bg, var(--brand-black)); }
+/* Les miniatures sont des liens : on neutralise le style de lien. */
+.thumb, .thumb:hover { text-decoration: none; color: inherit; }
