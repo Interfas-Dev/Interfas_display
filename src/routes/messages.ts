@@ -10,7 +10,7 @@ import {
   validateMessage,
   TITLE_MAX,
 } from '../content/messages.js';
-import { FONT_SIZES } from '../content/sanitize.js';
+import { BRAND_COLORS, FONT_SIZES } from '../content/sanitize.js';
 
 const LAYOUT = { layout: 'partials/layout.ejs' };
 type IdParams = { Params: { id: string } };
@@ -40,6 +40,7 @@ export async function messageRoutes(app: FastifyInstance) {
         user: reply.request.user,
         titleMax: TITLE_MAX,
         fontSizes: FONT_SIZES,
+        brandColors: BRAND_COLORS,
         ...data,
       },
       LAYOUT,

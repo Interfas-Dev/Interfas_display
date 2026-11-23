@@ -2,31 +2,36 @@
  * Rendu d'un message, partagé par l'écran (/display) et l'aperçu de l'admin.
  * Toutes les tailles sont en em, relatives à --message-base, que chaque
  * contexte fixe (vw sur l'écran, unités de conteneur dans l'aperçu).
+ * Thème sombre de la charte par défaut (noir chaud, texte blanc).
  */
 .message-body {
+  font-family: var(--font-brand);
+  font-weight: 400;
   font-size: var(--message-base, 3vw);
   line-height: 1.3;
-  color: #fff;
+  color: var(--brand-white);
   overflow-wrap: anywhere;
 }
 .message-body > :first-child { margin-top: 0; }
 .message-body > :last-child { margin-bottom: 0; }
 .message-body p { margin: 0 0 0.5em; }
+.message-body h1, .message-body h2, .message-body h3, .message-body strong { font-weight: 700; }
 .message-body h1 { font-size: 2em; margin: 0 0 0.4em; line-height: 1.15; }
 .message-body h2 { font-size: 1.5em; margin: 0 0 0.4em; line-height: 1.2; }
 .message-body h3 { font-size: 1.2em; margin: 0 0 0.4em; }
 .message-body ul, .message-body ol { margin: 0 0 0.5em; padding-left: 1.3em; }
-.message-body blockquote { margin: 0 0 0.5em; padding-left: 0.6em; border-left: 0.12em solid currentColor; opacity: 0.9; }
+.message-body li::marker { color: var(--brand-red); }
+.message-body blockquote { margin: 0 0 0.5em; padding-left: 0.6em; border-left: 0.12em solid var(--brand-greige); }
 .message-body mark { padding: 0 0.1em; border-radius: 0.1em; }
-.message-body hr { border: 0; border-top: 0.06em solid currentColor; opacity: 0.4; margin: 0.6em 0; }
+.message-body hr { border: 0; border-top: 0.06em solid var(--brand-greige); margin: 0.6em 0; }
 
 /* Cadre 16:9 pour l'aperçu dans l'admin. */
 .screen-preview {
   container-type: inline-size;
   aspect-ratio: 16 / 9;
   width: 100%;
-  background: #10233f;
-  border-radius: 6px;
+  background: var(--brand-black);
+  border-radius: var(--radius);
   overflow: hidden;
   display: flex; align-items: center; justify-content: center;
 }

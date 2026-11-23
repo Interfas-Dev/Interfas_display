@@ -1,0 +1,66 @@
+/*
+ * Charte graphique INTERFAS / SYLHIA v1.0 (6 novembre 2026).
+ * Codes relevés sur images : valeurs approchées, non contractuelles.
+ * Police Sora (SIL OFL 1.1), servie en local : voir public/fonts/sora/OFL.txt.
+ */
+@font-face {
+  font-family: 'Sora';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url(/public/fonts/sora/sora-latin-400-normal.woff2) format('woff2');
+}
+@font-face {
+  font-family: 'Sora';
+  font-style: normal;
+  font-weight: 700;
+  font-display: swap;
+  src: url(/public/fonts/sora/sora-latin-700-normal.woff2) format('woff2');
+}
+
+:root {
+  /* Palette de marque */
+  --brand-red: #DE3619;
+  --brand-black: #221B13;      /* noir chaud */
+  --brand-greige: #7F776C;     /* grège */
+  --brand-beige: #E7E3D8;
+  --brand-white: #FFFFFF;
+  --brand-gray: #5C574F;       /* gris fonctionnel */
+
+  --font-brand: 'Sora', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+  --radius: 8px;
+
+  /*
+   * Couleurs d'état : définies à part de la palette de marque (le rouge de
+   * marque ne signifie pas « erreur »). Toujours accompagnées d'un libellé
+   * ou d'un pictogramme.
+   */
+  --state-error-fg: #8A1538;
+  --state-error-bg: #F6E3E8;
+  --state-success-fg: #1E5E3A;
+  --state-success-bg: #E1EFE5;
+  --state-neutral-fg: var(--brand-gray);
+  --state-neutral-bg: #DCD7CB;
+}
+
+/* Thème clair (défaut pour le contenu) */
+.theme-light {
+  --bg: var(--brand-beige);
+  --surface: var(--brand-white);
+  --text: var(--brand-black);
+  --text-muted: var(--brand-gray);
+  --accent: var(--brand-red);
+  --on-accent: var(--brand-white);
+  --border: var(--brand-greige);
+}
+
+/* Thème sombre (défaut pour l'écran de l'atelier) */
+.theme-dark {
+  --bg: var(--brand-black);
+  --surface: var(--brand-black);
+  --text: var(--brand-white);
+  --text-muted: var(--brand-beige);
+  --accent: var(--brand-red);
+  --on-accent: var(--brand-white);
+  --border: var(--brand-greige);
+}

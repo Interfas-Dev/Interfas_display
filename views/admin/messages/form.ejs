@@ -30,8 +30,11 @@
           <button type="button" data-cmd="underline" title="Souligné"><u>S</u></button>
           <button type="button" data-cmd="strike" title="Barré"><s>B</s></button>
           <span class="sep"></span>
-          <label class="color" title="Couleur du texte">A<input type="color" data-cmd="color" value="#ffffff"></label>
-          <label class="color highlight" title="Surlignage">▮<input type="color" data-cmd="highlight" value="#f5c518"></label>
+          <span class="swatches" aria-label="Couleurs de la charte">
+            <% brandColors.forEach((c) => { %><button type="button" class="swatch" data-cmd="color" data-value="<%= c.value %>" title="Texte <%= c.name %>" aria-label="Texte <%= c.name %>" style="--swatch: <%= c.value %>"></button><% }) %>
+          </span>
+          <label class="color" title="Autre couleur de texte">A<input type="color" data-cmd="color" value="#ffffff"></label>
+          <label class="color highlight" title="Surlignage (aplat)">▮<input type="color" data-cmd="highlight" value="#de3619"></label>
           <button type="button" data-cmd="clearColor" title="Retirer couleurs et surlignage">⌫</button>
           <span class="sep"></span>
           <button type="button" data-cmd="alignLeft" title="Aligner à gauche">⯇</button>

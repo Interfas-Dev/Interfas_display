@@ -11,6 +11,15 @@ Outil d'affichage de messages pour l'écran de l'atelier, hébergé en local.
 Node.js 22, TypeScript, Fastify, SQLite (`better-sqlite3`), vues EJS, Docker.
 Mots de passe hachés en argon2id, sessions stockées en base avec cookie signé `HttpOnly` + `SameSite=Strict`, limitation à 10 tentatives de connexion par minute.
 
+## Charte graphique
+
+L'interface suit la **Référence graphique INTERFAS / SYLHIA v1.0** (6 novembre 2026) : jetons de couleur dans `public/css/brand.css`, police Sora (SIL OFL 1.1) servie en local depuis `public/fonts/sora/`, arrondis de 8 px.
+
+- Admin en thème clair (fond beige, texte noir chaud), écran de l'atelier en thème sombre (fond noir chaud, texte blanc).
+- Le rouge de marque sert d'accent (boutons principaux, grands titres). Il ne signale jamais une erreur : les états (erreur, succès, actif/inactif) ont leurs propres couleurs et toujours un libellé ou un pictogramme.
+- Petits textes sur beige en noir chaud ou `#5C574F`, jamais en rouge ni en grège. Texte sur aplat rouge toujours blanc.
+- Aucun logo n'est utilisé (la charte n'en autorise pas de nouveau).
+
 ## Développement
 
 ```bash

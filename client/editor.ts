@@ -91,7 +91,7 @@ if (surface && hidden && toolbar) {
   });
   toolbar.addEventListener('click', (e) => {
     const btn = (e.target as HTMLElement).closest<HTMLButtonElement>('button[data-cmd]');
-    if (btn) actions[btn.dataset.cmd!]?.();
+    if (btn) actions[btn.dataset.cmd!]?.(btn.dataset.value);
   });
   toolbar.addEventListener('change', (e) => {
     const el = e.target as HTMLSelectElement | HTMLInputElement;
