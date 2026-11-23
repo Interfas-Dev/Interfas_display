@@ -16,7 +16,7 @@ Mots de passe hachés en argon2id, sessions stockées en base avec cookie signé
 ```bash
 cp .env.example .env
 npm install
-npm run dev        # serveur avec rechargement automatique sur http://localhost:3000
+npm run dev        # compile l'éditeur puis lance le serveur sur http://localhost:3000
 npm test           # tests
 npm run typecheck  # vérification TypeScript
 ```
@@ -53,7 +53,9 @@ src/
   auth/             mots de passe, utilisateurs, sessions, plugin d'authentification
   cli/              commandes (création d'utilisateur)
   db/               connexion SQLite et migrations
-  routes/           routes (display, admin, health)
+  content/          messages et nettoyage du HTML
+  routes/           routes (display, admin, messages, health)
+client/             éditeur de texte riche (TipTap), compilé par esbuild vers public/build/
 views/              templates EJS
 public/             CSS et JS servis au navigateur
 test/               tests (vitest)
