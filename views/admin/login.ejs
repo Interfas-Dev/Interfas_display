@@ -1,0 +1,13 @@
+<h1>Interfas Display</h1>
+<p class="muted">Connecte-toi pour gérer les messages de l'atelier.</p>
+<% if (error) { %><p class="alert error" role="alert"><%= error %></p><% } %>
+<form method="post" action="/admin/login" class="form">
+  <input type="hidden" name="next" value="<%= next %>">
+  <label>Identifiant
+    <input name="username" value="<%= username %>" autocomplete="username" required autofocus>
+  </label>
+  <label>Mot de passe
+    <input name="password" type="password" autocomplete="current-password" required>
+  </label>
+  <button type="submit" class="btn primary">Se connecter</button>
+</form>

@@ -1,0 +1,21 @@
+<h1>Mon compte</h1>
+<p class="muted">Connecté en tant que <strong><%= user.username %></strong>.</p>
+
+<section class="card">
+  <h2>Changer le mot de passe</h2>
+  <% if (error) { %><p class="alert error" role="alert"><%= error %></p><% } %>
+  <% if (success) { %><p class="alert success" role="status"><%= success %></p><% } %>
+  <form method="post" action="/admin/account/password" class="form">
+    <label>Mot de passe actuel
+      <input name="current" type="password" autocomplete="current-password" required>
+    </label>
+    <label>Nouveau mot de passe (10 caractères minimum)
+      <input name="password" type="password" autocomplete="new-password" minlength="10" required>
+    </label>
+    <label>Confirmer le nouveau mot de passe
+      <input name="confirm" type="password" autocomplete="new-password" minlength="10" required>
+    </label>
+    <button type="submit" class="btn primary">Enregistrer</button>
+  </form>
+  <p class="muted small">Les autres appareils connectés à ton compte seront déconnectés.</p>
+</section>

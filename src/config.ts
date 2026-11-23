@@ -6,6 +6,7 @@ export interface AppConfig {
   databasePath: string;
   sessionSecret: string;
   isProduction: boolean;
+  logLevel: string;
 }
 
 export function loadConfig(env: NodeJS.ProcessEnv = process.env): AppConfig {
@@ -22,5 +23,6 @@ export function loadConfig(env: NodeJS.ProcessEnv = process.env): AppConfig {
     databasePath: path.resolve(env.DATABASE_PATH ?? './data/interfas.db'),
     sessionSecret: sessionSecret || 'dev-secret-a-ne-pas-utiliser-en-production',
     isProduction,
+    logLevel: env.LOG_LEVEL ?? 'info',
   };
 }
