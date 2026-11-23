@@ -1,6 +1,7 @@
 import type { Db } from '../db/index.js';
 import { isEmptyContent, sanitizeContent } from './sanitize.js';
 import type { Frame, Theme } from './templates.js';
+import { parseImages, type SlideImage } from './images.js';
 import { isLive, validateSchedule, type LocalNow, type ScheduleInput } from './schedule.js';
 
 export interface Message {
@@ -18,6 +19,8 @@ export interface Message {
   days_mask: number;
   daily_start: string | null;
   daily_end: string | null;
+  /** Images posées sur la diapo (JSON de SlideImage[]). */
+  images_json: string;
   position: number;
   created_at: string;
   updated_at: string;
@@ -40,6 +43,7 @@ export interface MessageInput extends ScheduleInput {
   signatureRole: string;
   templateId: number | null;
   isActive: boolean;
+  images: SlideImage[];
 }
 
 export const TITLE_MAX = 120;
@@ -47,7 +51,11 @@ export const HEADING_MAX = 120;
 export const SIGNATURE_MAX = 80;
 
 /** Valide et normalise une saisie. Retourne les erreurs par champ. */
-export function validateMessage(raw: Record<string, unknown>, templateExists: (id: number) => boolean) {
+export function validateMessage(
+  raw: Record<string, unknown>,
+  templateExists: (id: number) => boolean,
+  mediaExists: (file: string) => boolean = () => false,
+) {
   const heading = String(raw.heading ?? '').trim();
   // Le titre interne reprend le titre affiché s'il est laissé vide.
   const title = String(raw.title ?? '').trim() || heading;
@@ -62,11 +70,14 @@ export function validateMessage(raw: Record<string, unknown>, templateExists: (i
   if (!title) errors.title = 'Donne au moins un titre (affiché ou interne).';
   else if (title.length > TITLE_MAX) errors.title = `Le titre interne ne doit pas dépasser ${TITLE_MAX} caractères.`;
   if (heading.length > HEADING_MAX) errors.heading = `Le titre affiché ne doit pas dépasser ${HEADING_MAX} caractères.`;
-  if (!heading && isEmptyContent(contentHtml)) errors.content = 'Le message est vide : ajoute un titre affiché ou du texte.';
+  if (!heading && isEmptyContent(contentHtml) && !parseImages(raw.images, mediaExists).images.length) errors.content = 'Le message est vide : ajoute un titre affiché ou du texte.';
   if (signatureName.length > SIGNATURE_MAX || signatureRole.length > SIGNATURE_MAX) {
     errors.signature = `La signature ne doit pas dépasser ${SIGNATURE_MAX} caractères par ligne.`;
   }
   if (!templateId || !templateExists(templateId)) errors.template_id = 'Choisis un template.';
+
+  const parsed = parseImages(raw.images, mediaExists);
+  if (parsed.error) errors.images = parsed.error;
 
   const schedule = validateSchedule(raw);
   Object.assign(errors, schedule.errors);
@@ -74,7 +85,7 @@ export function validateMessage(raw: Record<string, unknown>, templateExists: (i
   return {
     input: {
       title, heading, contentHtml: isEmptyContent(contentHtml) ? '' : contentHtml,
-      signatureName, signatureRole, templateId, isActive, ...schedule.input,
+      signatureName, signatureRole, templateId, isActive, images: parsed.images, ...schedule.input,
     } satisfies MessageInput,
     errors,
   };
@@ -113,14 +124,14 @@ export function createMessage(db: Db, input: MessageInput, userId: number): numb
   const info = db
     .prepare(
       `INSERT INTO messages (title, heading, content_html, signature_name, signature_role, template_id, is_active,
-         duration_seconds, starts_at, ends_at, days_mask, daily_start, daily_end, position, created_by, updated_by)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+         duration_seconds, starts_at, ends_at, days_mask, daily_start, daily_end, images_json, position, created_by, updated_by)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
     )
     .run(
       input.title, input.heading, input.contentHtml, input.signatureName, input.signatureRole,
       input.templateId, input.isActive ? 1 : 0,
       input.durationSeconds, input.startsAt, input.endsAt, input.daysMask, input.dailyStart, input.dailyEnd,
-      next, userId, userId,
+      JSON.stringify(input.images), next, userId, userId,
     );
   return Number(info.lastInsertRowid);
 }
@@ -131,14 +142,14 @@ export function updateMessage(db: Db, id: number, input: MessageInput, userId: n
       .prepare(
         `UPDATE messages SET title = ?, heading = ?, content_html = ?, signature_name = ?, signature_role = ?,
            template_id = ?, is_active = ?, duration_seconds = ?, starts_at = ?, ends_at = ?, days_mask = ?,
-           daily_start = ?, daily_end = ?, updated_by = ?, updated_at = datetime('now')
+           daily_start = ?, daily_end = ?, images_json = ?, updated_by = ?, updated_at = datetime('now')
          WHERE id = ?`,
       )
       .run(
         input.title, input.heading, input.contentHtml, input.signatureName, input.signatureRole,
         input.templateId, input.isActive ? 1 : 0,
         input.durationSeconds, input.startsAt, input.endsAt, input.daysMask, input.dailyStart, input.dailyEnd,
-        userId, id,
+        JSON.stringify(input.images), userId, id,
       ).changes > 0
   );
 }

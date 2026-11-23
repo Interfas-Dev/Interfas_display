@@ -143,13 +143,30 @@
     <div class="screen-preview" id="preview">
       <%- include('../../partials/slide', { m: {
         theme: current ? current.theme : 'light', frame: current ? current.frame : 'none', show_logo: current ? current.show_logo : 1,
-        heading: message.heading, content_html: message.content_html,
+        heading: message.heading, content_html: message.content_html, images_json: message.images_json,
         sig_name: (message.signature_name || message.signature_role) ? message.signature_name : (current ? current.default_signature_name : ''),
         sig_role: (message.signature_name || message.signature_role) ? message.signature_role : (current ? current.default_signature_role : ''),
       } }) %>
     </div>
     <p class="muted small">Aperçu en 16:9. Les tailles s'adaptent à la résolution réelle de l'écran.</p>
+
+    <div class="image-panel" id="image-panel">
+      <input type="hidden" name="images" id="images" value="<%= message.images_json %>">
+      <div class="image-actions">
+        <label class="btn" id="image-add">
+          Ajouter une image
+          <input type="file" id="image-file" accept="image/png,image/jpeg,image/webp" hidden>
+        </label>
+        <span class="image-tools" id="image-tools" hidden>
+          <button type="button" class="btn" id="image-layer">Passer derrière le texte</button>
+          <button type="button" class="btn danger" id="image-remove">Retirer l'image</button>
+        </span>
+      </div>
+      <p class="muted small" id="image-status" role="status">Glisse une image pour la déplacer, tire son coin pour la redimensionner. PNG, JPG ou WebP, 5 Mo maximum.</p>
+      <% if (errors.images) { %><span class="field-error"><%= errors.images %></span><% } %>
+    </div>
   </aside>
 </form>
 <script src="/public/js/preview.js"></script>
+<script src="/public/js/images.js"></script>
 <script type="module" src="/public/build/editor.js"></script>

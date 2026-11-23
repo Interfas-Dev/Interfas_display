@@ -1,5 +1,6 @@
 <%# Rendu d'un message dans son template. Variable attendue : m %>
-<% const hasSig = m.sig_name || m.sig_role; %>
+<% const hasSig = m.sig_name || m.sig_role;
+   const images = Array.isArray(m.images) ? m.images : (() => { try { return JSON.parse(m.images_json || '[]'); } catch { return []; } })(); %>
 <div class="slide-frame theme-<%= m.theme %> frame-<%= m.frame %>" data-slide>
   <header class="slide-head"<%= (!m.show_logo && !m.heading) ? ' hidden' : '' %>>
     <img class="slide-logo" src="/public/img/logo-interfas.png" alt="INTERFAS"<%= m.show_logo ? '' : ' hidden' %>>
@@ -10,4 +11,7 @@
     <span class="sig-name"><%= m.sig_name %></span>
     <span class="sig-role"><%= m.sig_role %></span>
   </div>
+  <% images.forEach((img) => { %>
+    <div class="slide-image layer-<%= img.layer === 'back' ? 'back' : 'front' %>" style="left:<%= Number(img.x) %>%;top:<%= Number(img.y) %>%;width:<%= Number(img.w) %>%"><img src="/media/<%= img.file %>" alt="" draggable="false"></div>
+  <% }) %>
 </div>

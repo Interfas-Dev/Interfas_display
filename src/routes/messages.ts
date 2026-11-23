@@ -14,6 +14,7 @@ import {
   type Message,
   type MessageInput,
 } from '../content/messages.js';
+import { mediaExists } from '../content/media.js';
 import { BRAND_COLORS, FONT_SIZES } from '../content/sanitize.js';
 import { getDefaultTemplate, getTemplate, listTemplates } from '../content/templates.js';
 import {
@@ -34,7 +35,7 @@ type FormBody = Record<string, string | undefined>;
 type FormMessage = Pick<
   Message,
   | 'title' | 'heading' | 'content_html' | 'signature_name' | 'signature_role' | 'template_id' | 'is_active'
-  | 'duration_seconds' | 'starts_at' | 'ends_at' | 'days_mask' | 'daily_start' | 'daily_end'
+  | 'duration_seconds' | 'starts_at' | 'ends_at' | 'days_mask' | 'daily_start' | 'daily_end' | 'images_json'
 > & { id?: number };
 
 function parseId(raw: string): number | null {
@@ -58,6 +59,7 @@ function fromInput(input: MessageInput, id?: number): FormMessage {
     days_mask: input.daysMask,
     daily_start: input.dailyStart,
     daily_end: input.dailyEnd,
+    images_json: JSON.stringify(input.images),
   };
 }
 
@@ -66,6 +68,7 @@ export async function messageRoutes(app: FastifyInstance) {
   app.addHook('preHandler', app.requireAuth);
 
   const templateExists = (id: number) => !!getTemplate(app.db, id);
+  const imageExists = (file: string) => mediaExists(app.db, file);
 
   const notFound = (reply: FastifyReply) =>
     reply.code(404).view('admin/not-found.ejs', { title: 'Introuvable', user: reply.request.user }, LAYOUT);
@@ -102,14 +105,14 @@ export async function messageRoutes(app: FastifyInstance) {
         title: '', heading: '', content_html: '', signature_name: '', signature_role: '',
         template_id: getDefaultTemplate(app.db)?.id ?? null, is_active: 1,
         duration_seconds: DURATION_DEFAULT, starts_at: null, ends_at: null,
-        days_mask: ALL_DAYS, daily_start: null, daily_end: null,
+        days_mask: ALL_DAYS, daily_start: null, daily_end: null, images_json: '[]',
       },
       errors: {},
     }),
   );
 
   app.post<{ Body: FormBody }>('/', async (req, reply) => {
-    const { input, errors } = validateMessage(req.body ?? {}, templateExists);
+    const { input, errors } = validateMessage(req.body ?? {}, templateExists, imageExists);
     if (Object.keys(errors).length) return renderForm(reply, { message: fromInput(input), errors }, 400);
     createMessage(app.db, input, req.user!.id);
     return reply.redirect('/admin/messages', 303);
@@ -125,7 +128,7 @@ export async function messageRoutes(app: FastifyInstance) {
   app.post<IdParams & { Body: FormBody }>('/:id', async (req, reply) => {
     const id = parseId(req.params.id);
     if (!id || !getMessage(app.db, id)) return notFound(reply);
-    const { input, errors } = validateMessage(req.body ?? {}, templateExists);
+    const { input, errors } = validateMessage(req.body ?? {}, templateExists, imageExists);
     if (Object.keys(errors).length) return renderForm(reply, { message: fromInput(input, id), errors }, 400);
     updateMessage(app.db, id, input, req.user!.id);
     return reply.redirect('/admin/messages', 303);
