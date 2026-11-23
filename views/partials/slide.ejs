@@ -2,7 +2,7 @@
 <% const hasSig = m.sig_name || m.sig_role; %>
 <div class="slide-frame theme-<%= m.theme %> frame-<%= m.frame %>" data-slide>
   <header class="slide-head"<%= (!m.show_logo && !m.heading) ? ' hidden' : '' %>>
-    <div class="slide-logo" aria-label="INTERFAS"<%= m.show_logo ? '' : ' hidden' %>>INTERFAS</div>
+    <img class="slide-logo" src="/public/img/logo-interfas.png" alt="INTERFAS"<%= m.show_logo ? '' : ' hidden' %>>
     <h1 class="slide-heading"<%= m.heading ? '' : ' hidden' %>><%= m.heading %></h1>
   </header>
   <div class="message-body slide-body"><%- m.content_html %></div>

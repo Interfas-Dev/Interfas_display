@@ -12,8 +12,6 @@
   --slide-muted: var(--brand-gray);
   --slide-heading: var(--brand-red);     /* rouge sur beige : grands titres seulement */
   --slide-marker: var(--brand-red);
-  --logo-bg: var(--brand-red);
-  --logo-text: var(--brand-white);
 }
 .slide-frame.theme-dark, .editor-surface.theme-dark {
   --slide-bg: var(--brand-black);
@@ -21,8 +19,6 @@
   --slide-muted: var(--brand-beige);
   --slide-heading: var(--brand-white);
   --slide-marker: var(--brand-red);
-  --logo-bg: var(--brand-red);
-  --logo-text: var(--brand-white);
 }
 .slide-frame.theme-red, .editor-surface.theme-red {
   --slide-bg: var(--brand-red);
@@ -30,8 +26,6 @@
   --slide-muted: var(--brand-white);
   --slide-heading: var(--brand-white);
   --slide-marker: var(--brand-white);
-  --logo-bg: var(--brand-white);
-  --logo-text: var(--brand-red);
 }
 
 /* --- Cadre du message --- */
@@ -53,14 +47,12 @@
 .slide-head { display: flex; align-items: center; gap: 0.9em; min-width: 0; }
 .slide-logo {
   flex: none;
-  display: flex; align-items: flex-end; justify-content: center;
-  padding: 0 0 0.45em;
-  border-radius: 0.25em;
-  background: var(--logo-bg); color: var(--logo-text);
-  /* Logo provisoire en texte, en attendant le fichier officiel. */
-  font-weight: 700; font-size: 0.62em; letter-spacing: 0.02em;
-  width: 5.8em; height: 5.8em;
+  display: block;
+  width: 3.6em; height: auto;
+  aspect-ratio: 404 / 405;
 }
+/* Sur l'aplat rouge, le logo (rouge) est posé sur une pastille blanche pour rester lisible. */
+.slide-frame.theme-red .slide-logo { background: var(--brand-white); padding: 0.25em; border-radius: 0.3em; box-sizing: content-box; }
 .slide-heading {
   margin: 0;
   font-size: 1.9em; font-weight: 700; line-height: 1.1;
