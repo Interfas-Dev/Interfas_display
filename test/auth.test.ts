@@ -56,14 +56,14 @@ describe('connexion', () => {
     expect(sc.httpOnly).toBe(true);
     expect(sc.sameSite).toBe('Strict');
 
-    const admin = await app.inject({ method: 'GET', url: '/admin', headers: { cookie } });
+    const admin = await app.inject({ method: 'GET', url: '/admin/messages', headers: { cookie } });
     expect(admin.statusCode).toBe(200);
-    expect(admin.body).toContain('Bonjour Matthias');
+    expect(admin.body).toContain('Matthias');
 
     const out = await app.inject({ method: 'POST', url: '/admin/logout', headers: { cookie } });
     expect(out.statusCode).toBe(303);
 
-    const after = await app.inject({ method: 'GET', url: '/admin', headers: { cookie } });
+    const after = await app.inject({ method: 'GET', url: '/admin/messages', headers: { cookie } });
     expect(after.statusCode).toBe(302);
   });
 

@@ -40,4 +40,22 @@ export const migrations: Migration[] = [
       CREATE INDEX sessions_user_id ON sessions(user_id);
     `,
   },
+  {
+    version: 3,
+    name: 'messages',
+    sql: `
+      CREATE TABLE messages (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        title TEXT NOT NULL,
+        content_html TEXT NOT NULL,
+        is_active INTEGER NOT NULL DEFAULT 1,
+        position INTEGER NOT NULL DEFAULT 0,
+        created_by INTEGER REFERENCES users(id) ON DELETE SET NULL,
+        updated_by INTEGER REFERENCES users(id) ON DELETE SET NULL,
+        created_at TEXT NOT NULL DEFAULT (datetime('now')),
+        updated_at TEXT NOT NULL DEFAULT (datetime('now'))
+      );
+      CREATE INDEX messages_position ON messages(position);
+    `,
+  },
 ];
