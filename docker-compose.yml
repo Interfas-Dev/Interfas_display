@@ -1,0 +1,17 @@
+services:
+  app:
+    build: .
+    container_name: interfas-display
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    env_file:
+      - .env
+    environment:
+      NODE_ENV: production
+      DATABASE_PATH: /app/data/interfas.db
+    volumes:
+      - interfas-data:/app/data
+
+volumes:
+  interfas-data:
