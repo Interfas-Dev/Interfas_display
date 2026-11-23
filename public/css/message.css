@@ -41,6 +41,7 @@
   color: var(--slide-text);
   overflow: hidden;
 }
+.slide-frame { position: relative; }
 .slide-frame.frame-greige { box-shadow: inset 0 0 0 0.45em var(--brand-greige); }
 .slide-frame.frame-red { box-shadow: inset 0 0 0 0.45em var(--brand-red); }
 
@@ -71,6 +72,12 @@
 }
 .slide-signature .sig-role { color: var(--slide-muted); }
 .slide-frame [hidden] { display: none !important; }
+
+/* --- Images posées librement (x, y, largeur en % de la diapo) --- */
+.slide-head, .slide-body, .slide-signature { position: relative; z-index: 1; }
+.slide-image { position: absolute; z-index: 2; line-height: 0; }
+.slide-image.layer-back { z-index: 0; }
+.slide-image img { display: block; width: 100%; height: auto; pointer-events: none; user-select: none; }
 
 /* --- Corps riche --- */
 .message-body {

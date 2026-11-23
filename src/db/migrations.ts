@@ -100,4 +100,21 @@ export const migrations: Migration[] = [
       ALTER TABLE messages ADD COLUMN daily_end TEXT;
     `,
   },
+  {
+    version: 6,
+    name: 'images',
+    sql: `
+      -- Images téléversées (fichiers dans MEDIA_DIR, nommés <uuid>.<ext>).
+      CREATE TABLE media (
+        file TEXT PRIMARY KEY,
+        mime TEXT NOT NULL,
+        size INTEGER NOT NULL,
+        created_by INTEGER REFERENCES users(id) ON DELETE SET NULL,
+        created_at TEXT NOT NULL DEFAULT (datetime('now'))
+      );
+      -- Images posées librement sur la diapo : [{ file, x, y, w, layer }],
+      -- x / y / w en pourcentage de la diapo, layer = front | back.
+      ALTER TABLE messages ADD COLUMN images_json TEXT NOT NULL DEFAULT '[]';
+    `,
+  },
 ];

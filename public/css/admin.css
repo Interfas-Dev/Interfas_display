@@ -234,3 +234,24 @@ body.auth { min-height: 100vh; display: flex; align-items: center; justify-conte
 @keyframes live-pulse { 50% { opacity: 0.35; } }
 @media (prefers-reduced-motion: reduce) { .live-dot { animation: none; } }
 @media (max-width: 760px) { .live-panel { grid-template-columns: 1fr; } }
+
+/* --- Images positionnables sur l'aperçu du formulaire --- */
+.image-panel { margin-top: 0.75rem; display: grid; gap: 0.4rem; }
+.image-actions { display: flex; flex-wrap: wrap; gap: 0.5rem; align-items: center; }
+.image-tools { display: inline-flex; flex-wrap: wrap; gap: 0.5rem; }
+.image-tools[hidden] { display: none; }
+label.btn { cursor: pointer; }
+.screen-preview .slide-image.editable { cursor: grab; touch-action: none; outline: none; }
+.screen-preview .slide-image.editable:hover { box-shadow: 0 0 0 1px var(--brand-greige); }
+.screen-preview .slide-image.is-selected { box-shadow: 0 0 0 2px var(--brand-white), 0 0 0 4px var(--brand-black); }
+.screen-preview .slide-image.is-moving { cursor: grabbing; }
+.image-handle {
+  display: none;
+  position: absolute; right: -6px; bottom: -6px;
+  width: 12px; height: 12px;
+  background: var(--brand-white);
+  border: 2px solid var(--brand-black);
+  border-radius: 2px;
+  cursor: nwse-resize;
+}
+.slide-image.is-selected .image-handle { display: block; }

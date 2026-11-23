@@ -1,3 +1,6 @@
+import fs from 'node:fs';
+import os from 'node:os';
+import path from 'node:path';
 import type { FastifyInstance, LightMyRequestResponse } from 'fastify';
 import { buildApp } from '../../src/app.js';
 import { loadConfig } from '../../src/config.js';
@@ -6,7 +9,8 @@ import { createUser } from '../../src/auth/users.js';
 export const PASSWORD = 'motdepasse-solide';
 
 export async function makeApp(): Promise<FastifyInstance> {
-  return buildApp({ ...loadConfig({}), databasePath: ':memory:', logLevel: 'silent' });
+  const mediaDir = fs.mkdtempSync(path.join(os.tmpdir(), 'interfas-media-'));
+  return buildApp({ ...loadConfig({}), databasePath: ':memory:', mediaDir, logLevel: 'silent' });
 }
 
 export function form(data: Record<string, string | string[]>) {

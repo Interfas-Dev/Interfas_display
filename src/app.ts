@@ -10,6 +10,7 @@ import ejs from 'ejs';
 import type { AppConfig } from './config.js';
 import { openDatabase, type Db } from './db/index.js';
 import { healthRoutes } from './routes/health.js';
+import { mediaRoutes } from './routes/media.js';
 import { displayRoutes } from './routes/display.js';
 import { adminRoutes } from './routes/admin.js';
 import authPlugin from './auth/plugin.js';
@@ -56,6 +57,7 @@ export async function buildApp(config: AppConfig): Promise<FastifyInstance> {
 
   await app.register(healthRoutes);
   await app.register(displayRoutes);
+  await app.register(mediaRoutes);
   await app.register(adminRoutes, { prefix: '/admin' });
 
   app.get('/', async (_req, reply) => reply.redirect('/admin'));

@@ -4,6 +4,8 @@ export interface AppConfig {
   port: number;
   host: string;
   databasePath: string;
+  /** Dossier des images téléversées (par défaut : <dossier de la base>/media). */
+  mediaDir: string;
   sessionSecret: string;
   isProduction: boolean;
   logLevel: string;
@@ -22,10 +24,13 @@ export function loadConfig(env: NodeJS.ProcessEnv = process.env): AppConfig {
     throw new Error('SESSION_SECRET doit faire au moins 32 caractères en production.');
   }
 
+  const databasePath = path.resolve(env.DATABASE_PATH ?? './data/interfas.db');
+
   return {
     port: Number(env.PORT ?? 3000),
     host: env.HOST ?? '0.0.0.0',
-    databasePath: path.resolve(env.DATABASE_PATH ?? './data/interfas.db'),
+    databasePath,
+    mediaDir: path.resolve(env.MEDIA_DIR ?? path.join(path.dirname(databasePath), 'media')),
     sessionSecret: sessionSecret || 'dev-secret-a-ne-pas-utiliser-en-production',
     isProduction,
     logLevel: env.LOG_LEVEL ?? 'info',
