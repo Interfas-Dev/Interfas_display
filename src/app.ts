@@ -13,6 +13,7 @@ import { healthRoutes } from './routes/health.js';
 import { displayRoutes } from './routes/display.js';
 import { adminRoutes } from './routes/admin.js';
 import authPlugin from './auth/plugin.js';
+import realtimePlugin from './realtime.js';
 
 declare module 'fastify' {
   interface FastifyInstance {
@@ -45,6 +46,7 @@ export async function buildApp(config: AppConfig): Promise<FastifyInstance> {
   await app.register(cookie, { secret: config.sessionSecret });
   await app.register(formbody);
   await app.register(authPlugin);
+  await app.register(realtimePlugin);
   await app.register(fastifyStatic, { root: path.join(rootDir, 'public'), prefix: '/public/' });
   await app.register(fastifyView, {
     engine: { ejs },

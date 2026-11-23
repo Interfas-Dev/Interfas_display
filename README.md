@@ -34,6 +34,8 @@ npm run typecheck  # vérification TypeScript
 
 Chaque message a une durée d'affichage (3 s à 5 min, 10 s par défaut) et une planification facultative : date et heure de début et de fin, jours de la semaine, plage horaire quotidienne (qui peut passer minuit). Tout est évalué dans le fuseau `TIMEZONE` (Europe/Paris par défaut). L'écran n'affiche que les messages en cours de diffusion.
 
+L'écran se met à jour en temps réel (Server-Sent Events sur `/display/events`) : chaque modification enregistrée dans l'admin, et chaque début ou fin de planification (vérifiée toutes les 15 s), lui est envoyée sans rechargement. En cas de coupure, il se reconnecte seul et rattrape les changements. La page des messages de l'admin montre l'écran en direct.
+
 ## Comptes utilisateurs
 
 Il n'y a pas d'inscription publique. Les comptes sont créés en ligne de commande :

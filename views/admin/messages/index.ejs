@@ -6,6 +6,17 @@
   <a class="btn primary" href="/admin/messages/new">Nouveau message</a>
 </div>
 
+<section class="live-panel" aria-labelledby="live-title">
+  <div class="live-screen">
+    <iframe src="/display" title="Écran de l'atelier en direct" loading="lazy" tabindex="-1"></iframe>
+  </div>
+  <div class="live-info">
+    <h2 id="live-title"><span class="live-dot" aria-hidden="true"></span> En ce moment à l'écran</h2>
+    <p class="muted small">L'aperçu montre exactement ce que diffuse l'écran de l'atelier, en temps réel. Chaque modification enregistrée ici y apparaît en quelques secondes.</p>
+    <a class="btn" href="/display" target="_blank" rel="noopener">Ouvrir en plein écran</a>
+  </div>
+</section>
+
 <% if (messages.length === 0) { %>
   <div class="empty-state card">
     <p>Aucun message pour l'instant.</p>
