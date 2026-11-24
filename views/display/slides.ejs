@@ -7,5 +7,5 @@
   </div>
 <% } %>
 <% messages.forEach((m, i) => { %>
-  <div class="slide<%= i === 0 ? ' active' : '' %>" data-id="<%= m.id %>" data-duration="<%= m.duration_seconds %>"><%- include('../partials/slide', { m }) %></div>
+  <div class="slide<%= i === 0 ? ' active' : '' %>" data-id="<%= m.id %>" data-duration="<%= m.duration_seconds %>"<%= m.video_file ? ' data-video' : '' %>><%- include('../partials/slide', { m }) %></div>
 <% }) %>

@@ -12,6 +12,12 @@
     <span class="sig-role"><%= m.sig_role %></span>
   </div>
   <% images.forEach((img) => { %>
-    <div class="slide-image layer-<%= img.layer === 'back' ? 'back' : 'front' %>" style="left:<%= Number(img.x) %>%;top:<%= Number(img.y) %>%;width:<%= Number(img.w) %>%"><img src="/media/<%= img.file %>" alt="" draggable="false"></div>
+    <div class="slide-image layer-<%= img.layer === 'back' ? 'back' : 'front' %>" style="left:<%= Number(img.x) %>%;top:<%= Number(img.y) %>%;width:<%= Number(img.w) %>%">
+      <% if (/\.(mp4|webm)$/.test(img.file)) { %><video src="/media/<%= img.file %>#t=0.1" muted loop playsinline preload="metadata"<%= img.sound ? ' data-sound' : '' %>></video><% } else { %><img src="/media/<%= img.file %>" alt="" draggable="false"><% } %>
+    </div>
   <% }) %>
+  <%# Vidéo plein écran : recouvre toute la diapo, affichée le temps de la vidéo. %>
+  <div class="slide-fullvideo"<%= m.video_file ? '' : ' hidden' %>>
+    <% if (m.video_file) { %><video src="/media/<%= m.video_file %>#t=0.1" muted playsinline preload="metadata"<%= m.video_sound ? ' data-sound' : '' %>></video><% } %>
+  </div>
 </div>

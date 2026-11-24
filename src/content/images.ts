@@ -1,12 +1,16 @@
-import { MEDIA_FILE_RE } from './media.js';
+import { MEDIA_FILE_RE, isVideo } from './media.js';
 
-/** Image posée librement sur la diapo. x, y, w en % de la diapo. */
+/** Image ou vidéo posée librement sur la diapo. x, y, w en % de la diapo. */
 export interface SlideImage {
   file: string;
   x: number;
   y: number;
   w: number;
   layer: 'front' | 'back';
+  /** Déduit de l'extension du fichier. */
+  kind: 'image' | 'video';
+  /** Vidéo seulement : lue avec le son. */
+  sound?: boolean;
 }
 
 export const IMAGES_MAX = 8;
@@ -33,7 +37,7 @@ export function parseImages(raw: unknown, exists: (file: string) => boolean): { 
   const images: SlideImage[] = [];
   for (const item of data) {
     if (!item || typeof item !== 'object') continue;
-    const { file, x, y, w, layer } = item as Record<string, unknown>;
+    const { file, x, y, w, layer, sound } = item as Record<string, unknown>;
     if (typeof file !== 'string' || !MEDIA_FILE_RE.test(file) || !exists(file)) continue;
     const nx = Number(x), ny = Number(y), nw = Number(w);
     if (![nx, ny, nw].every(Number.isFinite)) continue;
@@ -44,6 +48,8 @@ export function parseImages(raw: unknown, exists: (file: string) => boolean): { 
       x: round(clamp(nx, -width + 2, 98)),
       y: round(clamp(ny, -50, 98)),
       layer: layer === 'back' ? 'back' : 'front',
+      kind: isVideo(file) ? 'video' : 'image',
+      ...(isVideo(file) ? { sound: sound === true } : {}),
     });
   }
   if (images.length > IMAGES_MAX) return { images: images.slice(0, IMAGES_MAX), error: `${IMAGES_MAX} images au maximum par message.` };

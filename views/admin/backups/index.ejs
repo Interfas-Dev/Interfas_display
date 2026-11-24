@@ -1,5 +1,5 @@
 <%- include('../../partials/settings-tabs', { active: 'backups' }) %>
-<% const size = (b) => b < 1024 * 1024 ? Math.max(1, Math.round(b / 1024)) + ' Ko' : (b / 1024 / 1024).toFixed(1).replace('.', ',') + ' Mo'; %>
+<% const size = (b) => b < 1024 * 1024 ? Math.max(1, Math.round(b / 1024)) + ' Ko' : b < 1024 ** 3 ? (b / 1024 / 1024).toFixed(1).replace('.', ',') + ' Mo' : (b / 1024 ** 3).toFixed(1).replace('.', ',') + ' Go'; %>
 <div class="page-head">
   <div>
     <h1>Paramètres · Sauvegardes</h1>
@@ -13,6 +13,13 @@
   </form>
 </div>
 
+<% if (disk) { const pct = Math.round((1 - disk.free / disk.total) * 100); %>
+  <div class="disk <%= disk.free < 2 * 1024 * 1024 * 1024 ? 'is-low' : '' %>">
+    <div class="disk-label"><strong>Disque du serveur</strong> : <%= size(disk.free) %> libres sur <%= size(disk.total) %> (<%= pct %> % utilisé)<% if (disk.free < 2 * 1024 * 1024 * 1024) { %> · <strong>espace faible</strong><% } %></div>
+    <div class="disk-bar" role="img" aria-label="<%= pct %> % utilisé"><span style="width:<%= pct %>%"></span></div>
+  </div>
+<% } %>
+
 <% if (locals.success) { %><p class="alert success" role="status"><%= success %></p><% } %>
 <% if (locals.error) { %><p class="alert error" role="alert"><%= error %></p>
 <% } else if (lastError) { %><p class="alert error" role="alert">La dernière sauvegarde a échoué : <%= lastError.message %></p><% } %>
@@ -21,19 +28,20 @@
   <p class="muted">Aucune sauvegarde pour l'instant.</p>
 <% } else { %>
   <table class="user-table">
-    <thead><tr><th>Date</th><th>Type</th><th>Images</th><th>Taille</th><th>Dossier</th></tr></thead>
+    <thead><tr><th>Date</th><th>Type</th><th>Fichiers médias</th><th>Espace utilisé</th><th>Dossier</th></tr></thead>
     <tbody>
       <% backups.forEach((b) => { %>
         <tr>
           <td data-label="Date"><%= new Date(b.date.replace(' ', 'T')).toLocaleString('fr-FR', { dateStyle: 'full', timeStyle: 'short' }) %></td>
           <td data-label="Type"><span class="badge neutral"><%= b.kind === 'manual' ? 'Manuelle' : 'Automatique' %></span></td>
-          <td data-label="Images"><%= b.images %></td>
-          <td data-label="Taille"><%= size(b.bytes) %></td>
+          <td data-label="Fichiers médias"><%= b.images %></td>
+          <td data-label="Espace utilisé"><%= size(b.bytes) %></td>
           <td data-label="Dossier"><code class="small"><%= b.name %></code></td>
         </tr>
       <% }) %>
     </tbody>
   </table>
+  <p class="muted small">Les images et vidéos déjà présentes dans une sauvegarde plus ancienne ne sont pas recopiées : « Espace utilisé » ne compte que ce qui est propre à chaque sauvegarde.</p>
 <% } %>
 
 <section class="card restore">

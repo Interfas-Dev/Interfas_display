@@ -289,3 +289,12 @@ label.btn { cursor: pointer; }
 .pager { display: flex; gap: 0.5rem; justify-content: center; margin-top: 1rem; }
 .restore { margin-top: 1.5rem; } .restore code { overflow-wrap: anywhere; } .restore ol { padding-left: 1.2rem; display: grid; gap: 0.4rem; }
 .history-table .badge { white-space: nowrap; } .card.restore { max-width: none; }
+.disk { margin: 0 0 1rem; display: grid; gap: 0.35rem; }
+.disk-bar { height: 8px; border-radius: 999px; background: var(--state-neutral-bg); overflow: hidden; }
+.disk-bar span { display: block; height: 100%; background: var(--brand-greige); }
+.disk.is-low .disk-bar span { background: var(--state-wait-fg); }
+.disk.is-low .disk-label { color: var(--state-wait-fg); }
+.video-full { margin-top: 0.75rem; }
+.video-full .checkbox { flex-direction: row; align-items: center; gap: 0.5rem; font-weight: 400; display: flex; }
+.image-tools [hidden] { display: none; }
+.image-actions [hidden], .video-full [hidden] { display: none; }

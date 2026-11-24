@@ -85,7 +85,7 @@ describe('images dans un message', () => {
     const res = await postMessage({ heading: 'Avec image', images, is_active: 'on' });
     expect(res.statusCode).toBe(303);
     const m = listMessages(app.db).find((x) => x.heading === 'Avec image')!;
-    expect(JSON.parse(m.images_json)).toEqual([{ file, x: 12.35, y: 98, w: 100, layer: 'back' }]);
+    expect(JSON.parse(m.images_json)).toEqual([{ file, x: 12.35, y: 98, w: 100, layer: 'back', kind: 'image' }]);
 
     const slides = await app.inject({ method: 'GET', url: '/display/slides' });
     expect(slides.body).toContain(`src="/media/${file}"`);
@@ -126,5 +126,79 @@ describe('images dans un message', () => {
     expect(fs.existsSync(path.join(app.config.mediaDir, used))).toBe(true);
     expect((await app.inject({ method: 'GET', url: `/media/${used}` })).statusCode).toBe(200);
     expect((await app.inject({ method: 'GET', url: `/media/${orphan}` })).statusCode).toBe(404);
+  });
+});
+
+const MP4 = Buffer.concat([Buffer.from([0, 0, 0, 0x18]), Buffer.from('ftypisom'), Buffer.alloc(4000, 7)]);
+const WEBM = Buffer.concat([Buffer.from([0x1a, 0x45, 0xdf, 0xa3]), Buffer.alloc(2000, 3)]);
+
+describe('vidéos', () => {
+  it('accepte MP4 et WebM, et vérifie le contenu réel', async () => {
+    const mp4 = await upload(MP4, 'video/mp4');
+    expect(mp4.statusCode).toBe(201);
+    expect(mp4.json()).toMatchObject({ kind: 'video' });
+    expect(mp4.json().file).toMatch(/\.mp4$/);
+    expect((await upload(WEBM, 'video/webm')).json().file).toMatch(/\.webm$/);
+    // Une image annoncée comme vidéo (ou l'inverse) est refusée
+    expect((await upload(PNG, 'video/mp4')).statusCode).toBe(415);
+    expect((await upload(MP4, 'image/png')).statusCode).toBe(415);
+    expect((await upload(Buffer.from('pas une vidéo'), 'video/mp4')).statusCode).toBe(415);
+  });
+
+  it('limite les images à 5 Mo même si elles sont envoyées comme vidéo autorisée', async () => {
+    const big = Buffer.concat([PNG, Buffer.alloc(6 * 1024 * 1024)]);
+    const res = await upload(big, 'image/png');
+    expect(res.statusCode).toBe(413);
+    expect(res.json().error).toContain('5 Mo');
+    expect(fs.readdirSync(app.config.mediaDir).some((n) => n.startsWith('.envoi-'))).toBe(false);
+  });
+
+  it('sert les vidéos par morceaux (Range)', async () => {
+    const file = (await upload(MP4, 'video/mp4')).json().file;
+    const full = await app.inject({ method: 'GET', url: `/media/${file}` });
+    expect(full.headers['accept-ranges']).toBe('bytes');
+    expect(Number(full.headers['content-length'])).toBe(MP4.length);
+    const part = await app.inject({ method: 'GET', url: `/media/${file}`, headers: { range: 'bytes=4-11' } });
+    expect(part.statusCode).toBe(206);
+    expect(part.headers['content-range']).toBe(`bytes 4-11/${MP4.length}`);
+    expect(part.body).toBe('ftypisom');
+    const tail = await app.inject({ method: 'GET', url: `/media/${file}`, headers: { range: 'bytes=-10' } });
+    expect(tail.rawPayload.length).toBe(10);
+    const bad = await app.inject({ method: 'GET', url: `/media/${file}`, headers: { range: `bytes=${MP4.length + 5}-` } });
+    expect(bad.statusCode).toBe(416);
+  });
+
+  it('pose une vidéo avec le son et affiche une vidéo plein écran', async () => {
+    const placed = (await upload(MP4, 'video/mp4')).json().file;
+    const full = (await upload(WEBM, 'video/webm')).json().file;
+    const res = await postMessage({
+      title: 'Film sécurité', is_active: 'on', video_file: full, video_sound: 'on',
+      images: JSON.stringify([{ file: placed, x: 5, y: 5, w: 40, sound: true }]),
+    });
+    expect(res.statusCode).toBe(303);
+    const m = listMessages(app.db).find((x) => x.title === 'Film sécurité')!;
+    expect(m).toMatchObject({ video_file: full, video_sound: 1 });
+    expect(JSON.parse(m.images_json)[0]).toMatchObject({ kind: 'video', sound: true });
+
+    const slides = await app.inject({ method: 'GET', url: '/display/slides' });
+    expect(slides.body).toMatch(new RegExp(`data-id="${m.id}"[^>]*data-video`));
+    expect(slides.body).toContain(`<video src="/media/${placed}#t=0.1" muted loop playsinline preload="metadata" data-sound>`);
+    expect(slides.body).toContain(`<video src="/media/${full}#t=0.1" muted playsinline preload="metadata" data-sound>`);
+  });
+
+  it('refuse une vidéo plein écran inconnue et garde les vidéos utilisées lors de la purge', async () => {
+    const res = await postMessage({ title: 'X', video_file: '00000000-0000-0000-0000-000000000000.mp4' });
+    expect(res.statusCode).toBe(400);
+    expect(res.body).toContain('Vidéo introuvable');
+
+    const m = listMessages(app.db).find((x) => x.title === 'Film sécurité')!;
+    app.db.prepare(`UPDATE media SET created_at = datetime('now', '-2 days')`).run();
+    await purgeOrphanMedia(app.db, app.config.mediaDir);
+    expect(fs.existsSync(path.join(app.config.mediaDir, m.video_file!))).toBe(true);
+  });
+
+  it('un message composé seulement d’une vidéo plein écran est valide', async () => {
+    const full = (await upload(MP4, 'video/mp4')).json().file;
+    expect((await postMessage({ title: 'Vidéo seule', video_file: full })).statusCode).toBe(303);
   });
 });
