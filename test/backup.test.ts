@@ -22,9 +22,9 @@ describe('sauvegarde', () => {
   it('copie la base et les images dans un dossier daté', async () => {
     const info = await runBackup(app.db, {
       backupDir: app.config.backupDir, mediaDir: app.config.mediaDir, timezone: 'Europe/Paris', kind: 'auto',
-      now: new Date('2026-11-24T02:00:00Z'),
+      now: new Date('2020-01-06T02:00:00Z'), // jour passé : la sauvegarde manuelle du jour ne la remplace pas
     });
-    expect(info).toMatchObject({ name: '2026-11-24_03-00-00', kind: 'auto', images: 1 });
+    expect(info).toMatchObject({ name: '2020-01-06_03-00-00', kind: 'auto', images: 1 });
     const copy = new Database(path.join(app.config.backupDir, info.name, 'interfas.db'), { readonly: true });
     expect((copy.prepare('SELECT username FROM users').get() as { username: string }).username).toBe('matthias');
     copy.close();
