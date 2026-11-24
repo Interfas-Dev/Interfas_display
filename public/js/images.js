@@ -15,7 +15,8 @@
   var soundBtn = document.getElementById('image-sound');
   var IMAGE_MAX = 5 * 1024 * 1024;
   var VIDEO_MAX = 200 * 1024 * 1024;
-  var IMAGE_TYPES = ['image/png', 'image/jpeg', 'image/webp'];
+  var IMAGE_TYPES = ['image/png', 'image/jpeg', 'image/webp', 'image/gif'];
+  var GIF_MAX = 20 * 1024 * 1024;
   var VIDEO_TYPES = ['video/mp4', 'video/webm'];
   var MAX_IMAGES = 8;
   function isVideo(file) { return /\.(mp4|webm)$/.test(file); }
@@ -172,8 +173,11 @@
   // Envoi avec progression (une vidéo peut être longue à téléverser).
   function upload(file, done) {
     var video = VIDEO_TYPES.indexOf(file.type) >= 0;
-    if (!video && IMAGE_TYPES.indexOf(file.type) < 0) return say('Format non accepté : PNG, JPG, WebP, MP4 ou WebM uniquement.', true);
-    if (file.size > (video ? VIDEO_MAX : IMAGE_MAX)) return say(video ? 'Vidéo trop lourde : 200 Mo maximum.' : 'Image trop lourde : 5 Mo maximum.', true);
+    if (!video && IMAGE_TYPES.indexOf(file.type) < 0) return say('Format non accepté : PNG, JPG, WebP, GIF, MP4 ou WebM uniquement.', true);
+    var gif = file.type === 'image/gif';
+    if (file.size > (video ? VIDEO_MAX : gif ? GIF_MAX : IMAGE_MAX)) {
+      return say(video ? 'Vidéo trop lourde : 200 Mo maximum.' : gif ? 'GIF trop lourd : 20 Mo maximum.' : 'Image trop lourde : 5 Mo maximum.', true);
+    }
     var xhr = new XMLHttpRequest();
     xhr.open('POST', '/admin/media');
     xhr.setRequestHeader('content-type', file.type);

@@ -202,3 +202,34 @@ describe('vidéos', () => {
     expect((await postMessage({ title: 'Vidéo seule', video_file: full })).statusCode).toBe(303);
   });
 });
+
+describe('GIF animés', () => {
+  // GIF animé minimal de 2 images (1x1 px)
+  const GIF = Buffer.from(
+    'R0lGODlhAQABAPAAAP8AAP///yH/C05FVFNDQVBFMi4wAwEAAAAh+QQACgAAACwAAAAAAQABAAACAkQBACH5BAAKAAAALAAAAAABAAEAAAICTAEAOw==',
+    'base64',
+  );
+
+  it('accepte un GIF, le sert tel quel et le pose sur la diapo', async () => {
+    const res = await upload(GIF, 'image/gif');
+    expect(res.statusCode).toBe(201);
+    const file = res.json().file as string;
+    expect(file).toMatch(/\.gif$/);
+    const served = await app.inject({ method: 'GET', url: `/media/${file}` });
+    expect(served.headers['content-type']).toBe('image/gif');
+    expect(served.rawPayload.equals(GIF)).toBe(true); // pas de conversion : l'animation est conservée
+
+    await postMessage({ title: 'Avec GIF', is_active: 'on', images: JSON.stringify([{ file, x: 10, y: 10, w: 20 }]) });
+    const slides = await app.inject({ method: 'GET', url: '/display/slides' });
+    expect(slides.body).toContain(`<img src="/media/${file}"`);
+  });
+
+  it('limite les GIF à 20 Mo et vérifie le contenu', async () => {
+    expect((await upload(PNG, 'image/gif')).statusCode).toBe(201); // une image reste une image : PNG accepté sous son vrai format
+    expect((await upload(Buffer.from('GIF00a....'), 'image/gif')).statusCode).toBe(415);
+    const big = Buffer.concat([GIF, Buffer.alloc(21 * 1024 * 1024)]);
+    const res = await upload(big, 'image/gif');
+    expect(res.statusCode).toBe(413);
+    expect(res.json().error).toContain('20 Mo');
+  });
+});

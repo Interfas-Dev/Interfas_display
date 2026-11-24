@@ -156,7 +156,7 @@
       <div class="image-actions">
         <label class="btn" id="image-add">
           Ajouter une image ou une vidéo
-          <input type="file" id="image-file" accept="image/png,image/jpeg,image/webp,video/mp4,video/webm" hidden>
+          <input type="file" id="image-file" accept="image/png,image/jpeg,image/webp,image/gif,video/mp4,video/webm" hidden>
         </label>
         <span class="image-tools" id="image-tools" hidden>
           <button type="button" class="btn" id="image-sound" aria-pressed="false" hidden>🔇 Sans le son</button>
@@ -164,7 +164,7 @@
           <button type="button" class="btn danger" id="image-remove">Retirer</button>
         </span>
       </div>
-      <p class="muted small" id="image-status" role="status">Glisse une image ou une vidéo pour la déplacer, tire son coin pour la redimensionner. Images PNG, JPG ou WebP (5 Mo) ; vidéos MP4 ou WebM (200 Mo), lues en boucle.</p>
+      <p class="muted small" id="image-status" role="status">Glisse une image ou une vidéo pour la déplacer, tire son coin pour la redimensionner. Images PNG, JPG ou WebP (5 Mo), GIF animés (20 Mo) ; vidéos MP4 ou WebM (200 Mo), lues en boucle.</p>
       <% if (errors.images) { %><span class="field-error"><%= errors.images %></span><% } %>
 
       <fieldset class="field-group video-full">
