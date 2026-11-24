@@ -1,0 +1,47 @@
+<%- include('../../partials/settings-tabs', { active: 'backups' }) %>
+<% const size = (b) => b < 1024 * 1024 ? Math.max(1, Math.round(b / 1024)) + ' Ko' : (b / 1024 / 1024).toFixed(1).replace('.', ',') + ' Mo'; %>
+<div class="page-head">
+  <div>
+    <h1>Paramètres · Sauvegardes</h1>
+    <p class="muted">
+      <% if (backupTime) { %>Sauvegarde automatique chaque jour à <strong><%= backupTime.replace(':', ' h ') %></strong> (heure de l'atelier).<% } else { %>Sauvegarde automatique désactivée (BACKUP_TIME).<% } %>
+      On garde les <%= keep.daily %> derniers jours et une sauvegarde par semaine sur <%= keep.weekly %> semaines.
+    </p>
+  </div>
+  <form method="post" action="/admin/backups">
+    <button type="submit" class="btn primary">Sauvegarder maintenant</button>
+  </form>
+</div>
+
+<% if (locals.success) { %><p class="alert success" role="status"><%= success %></p><% } %>
+<% if (locals.error) { %><p class="alert error" role="alert"><%= error %></p>
+<% } else if (lastError) { %><p class="alert error" role="alert">La dernière sauvegarde a échoué : <%= lastError.message %></p><% } %>
+
+<% if (!backups.length) { %>
+  <p class="muted">Aucune sauvegarde pour l'instant.</p>
+<% } else { %>
+  <table class="user-table">
+    <thead><tr><th>Date</th><th>Type</th><th>Images</th><th>Taille</th><th>Dossier</th></tr></thead>
+    <tbody>
+      <% backups.forEach((b) => { %>
+        <tr>
+          <td data-label="Date"><%= new Date(b.date.replace(' ', 'T')).toLocaleString('fr-FR', { dateStyle: 'full', timeStyle: 'short' }) %></td>
+          <td data-label="Type"><span class="badge neutral"><%= b.kind === 'manual' ? 'Manuelle' : 'Automatique' %></span></td>
+          <td data-label="Images"><%= b.images %></td>
+          <td data-label="Taille"><%= size(b.bytes) %></td>
+          <td data-label="Dossier"><code class="small"><%= b.name %></code></td>
+        </tr>
+      <% }) %>
+    </tbody>
+  </table>
+<% } %>
+
+<section class="card restore">
+  <h2>Restaurer une sauvegarde</h2>
+  <p class="small">Les sauvegardes sont dans le dossier <code>backups/</code> à côté du <code>docker-compose.yml</code> (dans le conteneur : <code><%= backupDir %></code>). Chaque dossier contient la base <code>interfas.db</code> et le dossier <code>media/</code>.</p>
+  <ol class="small">
+    <li>Arrêter l'application : <code>docker compose stop app</code></li>
+    <li>Copier la sauvegarde dans le volume : <code>docker compose run --rm --no-deps app sh -c "rm -rf /app/data/interfas.db-wal /app/data/interfas.db-shm /app/data/media &amp;&amp; cp -r /app/backups/DOSSIER/. /app/data/"</code> en remplaçant DOSSIER par le nom de la sauvegarde</li>
+    <li>Redémarrer : <code>docker compose start app</code></li>
+  </ol>
+</section>
