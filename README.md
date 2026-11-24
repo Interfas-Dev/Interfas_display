@@ -78,9 +78,20 @@ Points d'attention :
 
 La base SQLite est stockée dans le volume Docker `interfas-data` (préfixé par le nom du dossier, à sauvegarder). C'est le même que dans la première version : un `docker compose up -d --build` dans le même dossier conserve les comptes et les messages.
 
+## Images et vidéos
+
+Dans le formulaire d'un message :
+
+- **Ajouter une image ou une vidéo** : PNG, JPG, WebP (5 Mo) ou MP4, WebM (200 Mo), à placer et redimensionner à la souris sur l'aperçu. Les vidéos tournent en boucle, sans le son sauf si « Son activé ».
+- **Vidéo plein écran** : le message n'affiche que la vidéo et reste à l'écran le temps de sa lecture (la durée d'affichage est ignorée).
+
+Les fichiers sont envoyés en flux (pas de copie en mémoire) et leur format réel est vérifié. Préférer le MP4 en H.264, lu par tous les navigateurs. Pour que le son fonctionne sans clic sur l'écran de l'atelier, lancer le navigateur en mode kiosque avec la lecture automatique autorisée, par exemple `chromium --kiosk --autoplay-policy=no-user-gesture-required https://<DISPLAY_HOST>/display`. Sinon, la vidéo est lue sans le son.
+
+Les fichiers retirés de tous les messages sont supprimés au bout de 24 h.
+
 ## Sauvegardes
 
-Chaque jour à 3 h (`BACKUP_TIME`, heure de l'atelier), l'application copie à chaud la base SQLite et les images dans un dossier daté de `./backups` sur le serveur (monté dans le conteneur sur `/app/backups`). On garde les 7 derniers jours et une sauvegarde par semaine sur 4 semaines. Paramètres › Sauvegardes liste les sauvegardes et propose « Sauvegarder maintenant ».
+Chaque jour à 3 h (`BACKUP_TIME`, heure de l'atelier), l'application copie à chaud la base SQLite, les images et les vidéos dans un dossier daté de `./backups` sur le serveur (monté dans le conteneur sur `/app/backups`). On garde les 7 derniers jours et une sauvegarde par semaine sur 4 semaines. Un fichier déjà présent dans la sauvegarde précédente n'est pas recopié mais relié (lien physique) : une vidéo n'occupe sa place qu'une fois, quel que soit le nombre de sauvegardes. La page affiche aussi l'espace libre du disque. Paramètres › Sauvegardes liste les sauvegardes et propose « Sauvegarder maintenant ».
 
 Le conteneur tourne avec l'utilisateur `node` (UID 1000) : avant le premier lancement, créer le dossier avec les bons droits.
 

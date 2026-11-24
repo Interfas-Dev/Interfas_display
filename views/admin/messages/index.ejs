@@ -34,7 +34,7 @@
             <a href="/admin/messages/<%= m.id %>/edit"><%= m.title %></a>
             <span class="badge status-<%= m.status %>"><%= m.statusLabel %></span>
           </div>
-          <p class="small schedule-line"><span title="Durée d'affichage">⏱ <%= m.duration_seconds %> s</span> · <span title="Planification">🗓 <%= m.scheduleText %></span></p>
+          <p class="small schedule-line"><span title="Durée d'affichage">⏱ <%= m.video_file ? 'durée de la vidéo' : m.duration_seconds + ' s' %></span> · <span title="Planification">🗓 <%= m.scheduleText %></span></p>
           <p class="muted small"><%= m.template_name ? "Template : " + m.template_name + " · " : "" %>Modifié le <%= new Date(m.updated_at + 'Z').toLocaleString('fr-FR', { dateStyle: 'short', timeStyle: 'short', timeZone: 'Europe/Paris' }) %><%= m.updated_by_name ? ' par ' + m.updated_by_name : '' %></p>
         </div>
         <div class="message-actions">

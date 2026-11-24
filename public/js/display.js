@@ -14,17 +14,63 @@
     return (s > 0 ? s : 10) * 1000;
   }
 
+  var SAFETY_MS = 15 * 60 * 1000; // une vidéo plein écran bloquée ne fige pas l'écran
+
+  function videos(slide) { return slide ? slide.querySelectorAll('video') : []; }
+
+  // Lecture avec le son si demandé ; si le navigateur refuse la lecture
+  // automatique avec son, on rejoue sans le son plutôt que de rester figé.
+  function play(video) {
+    video.muted = !video.hasAttribute('data-sound');
+    var p = video.play();
+    if (p && p.catch) {
+      p.catch(function () {
+        video.muted = true;
+        video.play().catch(function () {});
+      });
+    }
+  }
+
+  function stopVideos(slide) {
+    Array.prototype.forEach.call(videos(slide), function (v) { v.pause(); });
+  }
+
+  function startSlide(slide) {
+    Array.prototype.forEach.call(videos(slide), function (v) {
+      try { v.currentTime = 0; } catch (e) { /* métadonnées pas encore chargées */ }
+      play(v);
+    });
+  }
+
   function schedule() {
     clearTimeout(timer);
     var list = slides();
-    if (list.length > 1) timer = setTimeout(next, durationOf(list[index]));
+    var slide = list[index];
+    if (!slide) return;
+    var full = slide.hasAttribute('data-video') ? slide.querySelector('.slide-fullvideo video') : null;
+    if (full) {
+      // Message vidéo plein écran : il dure le temps de la vidéo.
+      full.loop = list.length === 1;
+      if (list.length > 1) {
+        full.onended = function () { next(); };
+        full.onerror = function () { clearTimeout(timer); timer = setTimeout(next, 5000); };
+        timer = setTimeout(next, SAFETY_MS);
+      }
+      return;
+    }
+    if (list.length > 1) timer = setTimeout(next, durationOf(slide));
   }
 
   function next() {
     var list = slides();
-    list[index].classList.remove('active');
+    var prev = list[index];
+    var full = prev && prev.querySelector('.slide-fullvideo video');
+    if (full) { full.onended = null; full.onerror = null; }
+    prev.classList.remove('active');
+    stopVideos(prev);
     index = (index + 1) % list.length;
     list[index].classList.add('active');
+    startSlide(list[index]);
     schedule();
   }
 
@@ -42,6 +88,7 @@
           if (currentId && list[i].getAttribute('data-id') === currentId) index = i;
           list[i].classList.toggle('active', i === index);
         }
+        startSlide(list[index]);
         schedule();
       })
       .catch(function () { setTimeout(refresh, 5000); });
@@ -67,6 +114,7 @@
     };
   }
 
+  startSlide(slides()[index]);
   schedule();
   connect();
   setTimeout(function () { location.reload(); }, FULL_RELOAD_MS);

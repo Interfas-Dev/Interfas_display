@@ -92,3 +92,33 @@ describe('rotation', () => {
     expect(left.some((n) => n.startsWith('.en-cours-'))).toBe(false);
   });
 });
+
+describe('sauvegardes sans doublons', () => {
+  it('relie les médias inchangés à la sauvegarde précédente', async () => {
+    const base = fs.mkdtempSync(path.join(path.dirname(app.config.backupDir), 'dedup-'));
+    const media = path.join(base, 'media');
+    const backups = path.join(base, 'backups');
+    fs.mkdirSync(media);
+    fs.writeFileSync(path.join(media, 'video.mp4'), Buffer.alloc(200_000, 1));
+    const opts = { backupDir: backups, mediaDir: media, timezone: 'Europe/Paris', kind: 'auto' as const };
+    const a = await runBackup(app.db, { ...opts, now: new Date('2026-11-20T02:00:00Z') });
+    fs.writeFileSync(path.join(media, 'photo.png'), 'nouvelle');
+    const b = await runBackup(app.db, { ...opts, now: new Date('2026-11-21T02:00:00Z') });
+
+    const inode = (n: string) => fs.statSync(path.join(backups, n, 'media', 'video.mp4')).ino;
+    expect(inode(b.name)).toBe(inode(a.name));
+    expect(fs.readFileSync(path.join(backups, b.name, 'media', 'photo.png'), 'utf8')).toBe('nouvelle');
+
+    const list = await listBackups(backups);
+    const newer = list.find((x) => x.name === b.name)!;
+    const older = list.find((x) => x.name === a.name)!;
+    expect(older.bytes).toBeGreaterThan(200_000);
+    expect(newer.bytes).toBeLessThan(200_000); // la vidéo n'est comptée qu'une fois
+    expect(newer.images).toBe(2);
+  });
+
+  it('affiche l’espace disque', async () => {
+    const page = await app.inject({ method: 'GET', url: '/admin/backups', headers: { cookie: admin } });
+    expect(page.body).toContain('Disque du serveur');
+  });
+});

@@ -77,7 +77,9 @@
 .slide-head, .slide-body, .slide-signature { position: relative; z-index: 1; }
 .slide-image { position: absolute; z-index: 2; line-height: 0; }
 .slide-image.layer-back { z-index: 0; }
-.slide-image img { display: block; width: 100%; height: auto; pointer-events: none; user-select: none; }
+.slide-image img, .slide-image video { display: block; width: 100%; height: auto; pointer-events: none; user-select: none; }
+.slide-fullvideo { position: absolute; inset: 0; z-index: 3; background: #000; display: flex; }
+.slide-fullvideo video { width: 100%; height: 100%; object-fit: contain; }
 
 /* --- Corps riche --- */
 .message-body {

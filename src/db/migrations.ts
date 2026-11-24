@@ -150,4 +150,14 @@ export const migrations: Migration[] = [
       CREATE INDEX audit_log_user ON audit_log(user_id);
     `,
   },
+  {
+    version: 9,
+    name: 'videos',
+    sql: `
+      -- Vidéo plein écran : le message n'affiche qu'elle, le temps de la vidéo.
+      -- Les vidéos posées librement sont dans images_json (kind = 'video').
+      ALTER TABLE messages ADD COLUMN video_file TEXT;
+      ALTER TABLE messages ADD COLUMN video_sound INTEGER NOT NULL DEFAULT 0;
+    `,
+  },
 ];

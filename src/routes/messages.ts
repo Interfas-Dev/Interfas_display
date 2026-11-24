@@ -37,6 +37,7 @@ type FormMessage = Pick<
   Message,
   | 'title' | 'heading' | 'content_html' | 'signature_name' | 'signature_role' | 'template_id' | 'is_active'
   | 'duration_seconds' | 'starts_at' | 'ends_at' | 'days_mask' | 'daily_start' | 'daily_end' | 'images_json'
+  | 'video_file' | 'video_sound'
 > & { id?: number };
 
 const TIME = (v: unknown) => (v ? String(v).replace('T', ' ') : '(aucune)');
@@ -51,7 +52,9 @@ function messageSpecs(templateName: (id: unknown) => string): FieldSpec<FormMess
     { label: 'Titre affiché', get: (m) => m.heading },
     { label: 'Titre interne', get: (m) => m.title },
     { label: 'Texte', get: (m) => m.content_html, format: null },
-    { label: 'Images', get: (m) => m.images_json, format: null },
+    { label: 'Images et vidéos', get: (m) => m.images_json, format: null },
+    { label: 'Vidéo plein écran', get: (m) => m.video_file, format: null },
+    { label: 'Son de la vidéo', get: (m) => !!m.video_sound, format: yesNo },
     { label: 'Template', get: (m) => m.template_id, format: templateName },
     { label: 'Signature (nom)', get: (m) => m.signature_name },
     { label: 'Signature (fonction)', get: (m) => m.signature_role },
@@ -86,6 +89,8 @@ function fromInput(input: MessageInput, id?: number): FormMessage {
     daily_start: input.dailyStart,
     daily_end: input.dailyEnd,
     images_json: JSON.stringify(input.images),
+    video_file: input.videoFile,
+    video_sound: input.videoSound ? 1 : 0,
   };
 }
 
@@ -132,7 +137,7 @@ export async function messageRoutes(app: FastifyInstance) {
         title: '', heading: '', content_html: '', signature_name: '', signature_role: '',
         template_id: getDefaultTemplate(app.db)?.id ?? null, is_active: 1,
         duration_seconds: DURATION_DEFAULT, starts_at: null, ends_at: null,
-        days_mask: ALL_DAYS, daily_start: null, daily_end: null, images_json: '[]',
+        days_mask: ALL_DAYS, daily_start: null, daily_end: null, images_json: '[]', video_file: null, video_sound: 0,
       },
       errors: {},
     }),

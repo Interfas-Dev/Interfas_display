@@ -2,6 +2,7 @@ import type { Db } from '../db/index.js';
 import { isEmptyContent, sanitizeContent } from './sanitize.js';
 import type { Frame, Theme } from './templates.js';
 import { parseImages, type SlideImage } from './images.js';
+import { isVideo } from './media.js';
 import { isLive, validateSchedule, type LocalNow, type ScheduleInput } from './schedule.js';
 
 export interface Message {
@@ -21,6 +22,9 @@ export interface Message {
   daily_end: string | null;
   /** Images posées sur la diapo (JSON de SlideImage[]). */
   images_json: string;
+  /** Vidéo plein écran : le message n'affiche qu'elle, le temps de la vidéo. */
+  video_file: string | null;
+  video_sound: number;
   position: number;
   created_at: string;
   updated_at: string;
@@ -44,6 +48,8 @@ export interface MessageInput extends ScheduleInput {
   templateId: number | null;
   isActive: boolean;
   images: SlideImage[];
+  videoFile: string | null;
+  videoSound: boolean;
 }
 
 export const TITLE_MAX = 120;
@@ -70,7 +76,13 @@ export function validateMessage(
   if (!title) errors.title = 'Donne au moins un titre (affiché ou interne).';
   else if (title.length > TITLE_MAX) errors.title = `Le titre interne ne doit pas dépasser ${TITLE_MAX} caractères.`;
   if (heading.length > HEADING_MAX) errors.heading = `Le titre affiché ne doit pas dépasser ${HEADING_MAX} caractères.`;
-  if (!heading && isEmptyContent(contentHtml) && !parseImages(raw.images, mediaExists).images.length) errors.content = 'Le message est vide : ajoute un titre affiché ou du texte.';
+  const rawVideo = String(raw.video_file ?? '').trim();
+  const videoFile = rawVideo && isVideo(rawVideo) && mediaExists(rawVideo) ? rawVideo : null;
+  if (rawVideo && !videoFile) errors.video = 'Vidéo introuvable : ajoute-la à nouveau.';
+  const videoSound = !!videoFile && (raw.video_sound === 'on' || raw.video_sound === true);
+  if (!heading && isEmptyContent(contentHtml) && !parseImages(raw.images, mediaExists).images.length && !videoFile) {
+    errors.content = 'Le message est vide : ajoute un titre affiché, du texte, une image ou une vidéo.';
+  }
   if (signatureName.length > SIGNATURE_MAX || signatureRole.length > SIGNATURE_MAX) {
     errors.signature = `La signature ne doit pas dépasser ${SIGNATURE_MAX} caractères par ligne.`;
   }
@@ -85,7 +97,7 @@ export function validateMessage(
   return {
     input: {
       title, heading, contentHtml: isEmptyContent(contentHtml) ? '' : contentHtml,
-      signatureName, signatureRole, templateId, isActive, images: parsed.images, ...schedule.input,
+      signatureName, signatureRole, templateId, isActive, images: parsed.images, videoFile, videoSound, ...schedule.input,
     } satisfies MessageInput,
     errors,
   };
@@ -124,14 +136,14 @@ export function createMessage(db: Db, input: MessageInput, userId: number): numb
   const info = db
     .prepare(
       `INSERT INTO messages (title, heading, content_html, signature_name, signature_role, template_id, is_active,
-         duration_seconds, starts_at, ends_at, days_mask, daily_start, daily_end, images_json, position, created_by, updated_by)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+         duration_seconds, starts_at, ends_at, days_mask, daily_start, daily_end, images_json, video_file, video_sound, position, created_by, updated_by)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
     )
     .run(
       input.title, input.heading, input.contentHtml, input.signatureName, input.signatureRole,
       input.templateId, input.isActive ? 1 : 0,
       input.durationSeconds, input.startsAt, input.endsAt, input.daysMask, input.dailyStart, input.dailyEnd,
-      JSON.stringify(input.images), next, userId, userId,
+      JSON.stringify(input.images), input.videoFile, input.videoSound ? 1 : 0, next, userId, userId,
     );
   return Number(info.lastInsertRowid);
 }
@@ -142,14 +154,14 @@ export function updateMessage(db: Db, id: number, input: MessageInput, userId: n
       .prepare(
         `UPDATE messages SET title = ?, heading = ?, content_html = ?, signature_name = ?, signature_role = ?,
            template_id = ?, is_active = ?, duration_seconds = ?, starts_at = ?, ends_at = ?, days_mask = ?,
-           daily_start = ?, daily_end = ?, images_json = ?, updated_by = ?, updated_at = datetime('now')
+           daily_start = ?, daily_end = ?, images_json = ?, video_file = ?, video_sound = ?, updated_by = ?, updated_at = datetime('now')
          WHERE id = ?`,
       )
       .run(
         input.title, input.heading, input.contentHtml, input.signatureName, input.signatureRole,
         input.templateId, input.isActive ? 1 : 0,
         input.durationSeconds, input.startsAt, input.endsAt, input.daysMask, input.dailyStart, input.dailyEnd,
-        JSON.stringify(input.images), userId, id,
+        JSON.stringify(input.images), input.videoFile, input.videoSound ? 1 : 0, userId, id,
       ).changes > 0
   );
 }

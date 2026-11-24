@@ -1,5 +1,5 @@
 import type { FastifyInstance } from 'fastify';
-import { listBackups, rotateBackups, runBackup, KEEP_DAILY, KEEP_WEEKLY, type BackupInfo } from '../backup.js';
+import { diskSpace, listBackups, rotateBackups, runBackup, KEEP_DAILY, KEEP_WEEKLY, type BackupInfo } from '../backup.js';
 import { localNow } from '../content/schedule.js';
 import { logAudit } from '../audit.js';
 
@@ -58,6 +58,7 @@ export async function backupRoutes(app: FastifyInstance) {
           title: 'Sauvegardes',
           user: reply.request.user,
           backups: await listBackups(cfg.backupDir),
+          disk: await diskSpace(cfg.backupDir),
           backupDir: cfg.backupDir,
           backupTime: cfg.backupTime,
           keep: { daily: KEEP_DAILY, weekly: KEEP_WEEKLY },

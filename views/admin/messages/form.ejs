@@ -144,6 +144,7 @@
       <%- include('../../partials/slide', { m: {
         theme: current ? current.theme : 'light', frame: current ? current.frame : 'none', show_logo: current ? current.show_logo : 1,
         heading: message.heading, content_html: message.content_html, images_json: message.images_json,
+        video_file: message.video_file, video_sound: message.video_sound,
         sig_name: (message.signature_name || message.signature_role) ? message.signature_name : (current ? current.default_signature_name : ''),
         sig_role: (message.signature_name || message.signature_role) ? message.signature_role : (current ? current.default_signature_role : ''),
       } }) %>
@@ -154,16 +155,33 @@
       <input type="hidden" name="images" id="images" value="<%= message.images_json %>">
       <div class="image-actions">
         <label class="btn" id="image-add">
-          Ajouter une image
-          <input type="file" id="image-file" accept="image/png,image/jpeg,image/webp" hidden>
+          Ajouter une image ou une vidéo
+          <input type="file" id="image-file" accept="image/png,image/jpeg,image/webp,video/mp4,video/webm" hidden>
         </label>
         <span class="image-tools" id="image-tools" hidden>
+          <button type="button" class="btn" id="image-sound" aria-pressed="false" hidden>🔇 Sans le son</button>
           <button type="button" class="btn" id="image-layer">Passer derrière le texte</button>
-          <button type="button" class="btn danger" id="image-remove">Retirer l'image</button>
+          <button type="button" class="btn danger" id="image-remove">Retirer</button>
         </span>
       </div>
-      <p class="muted small" id="image-status" role="status">Glisse une image pour la déplacer, tire son coin pour la redimensionner. PNG, JPG ou WebP, 5 Mo maximum.</p>
+      <p class="muted small" id="image-status" role="status">Glisse une image ou une vidéo pour la déplacer, tire son coin pour la redimensionner. Images PNG, JPG ou WebP (5 Mo) ; vidéos MP4 ou WebM (200 Mo), lues en boucle.</p>
       <% if (errors.images) { %><span class="field-error"><%= errors.images %></span><% } %>
+
+      <fieldset class="field-group video-full">
+        <legend>Vidéo plein écran</legend>
+        <input type="hidden" name="video_file" id="video_file" value="<%= message.video_file || '' %>">
+        <p class="small" id="video-full-name"><%= message.video_file ? 'Vidéo plein écran choisie.' : 'Aucune vidéo plein écran.' %></p>
+        <div class="image-actions">
+          <label class="btn">
+            <%= message.video_file ? 'Remplacer la vidéo' : 'Choisir une vidéo' %>
+            <input type="file" id="video-full-file" accept="video/mp4,video/webm" hidden>
+          </label>
+          <button type="button" class="btn danger" id="video-full-remove"<%= message.video_file ? '' : ' hidden' %>>Retirer la vidéo</button>
+        </div>
+        <label class="checkbox"><input type="checkbox" name="video_sound" id="video_sound" value="on" <%= message.video_sound ? 'checked' : '' %> <%= message.video_file ? '' : 'disabled' %>> Avec le son</label>
+        <span class="hint">Le message n'affiche alors que la vidéo, en plein écran, et reste à l'écran le temps de la vidéo (la durée d'affichage est ignorée).</span>
+        <% if (errors.video) { %><span class="field-error"><%= errors.video %></span><% } %>
+      </fieldset>
     </div>
   </aside>
 </form>
