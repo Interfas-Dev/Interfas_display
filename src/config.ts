@@ -6,6 +6,10 @@ export interface AppConfig {
   databasePath: string;
   /** Dossier des images téléversées (par défaut : <dossier de la base>/media). */
   mediaDir: string;
+  /** Dossier des sauvegardes (par défaut : <dossier de la base>/backups). */
+  backupDir: string;
+  /** Heure de la sauvegarde quotidienne (HH:MM, fuseau TIMEZONE) ; vide = désactivée. */
+  backupTime: string;
   sessionSecret: string;
   isProduction: boolean;
   logLevel: string;
@@ -31,6 +35,8 @@ export function loadConfig(env: NodeJS.ProcessEnv = process.env): AppConfig {
     host: env.HOST ?? '0.0.0.0',
     databasePath,
     mediaDir: path.resolve(env.MEDIA_DIR ?? path.join(path.dirname(databasePath), 'media')),
+    backupDir: path.resolve(env.BACKUP_DIR ?? path.join(path.dirname(databasePath), 'backups')),
+    backupTime: /^([01]\d|2[0-3]):[0-5]\d$/.test(env.BACKUP_TIME ?? '03:00') ? (env.BACKUP_TIME ?? '03:00') : '',
     sessionSecret: sessionSecret || 'dev-secret-a-ne-pas-utiliser-en-production',
     isProduction,
     logLevel: env.LOG_LEVEL ?? 'info',

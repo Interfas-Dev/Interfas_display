@@ -1,6 +1,7 @@
 import type { FastifyInstance } from 'fastify';
 import { verifyPassword } from '../auth/password.js';
 import { deleteOtherSessions } from '../auth/sessions.js';
+import { logAudit } from '../audit.js';
 import { getPasswordHash, setPassword, validatePassword } from '../auth/users.js';
 
 const LAYOUT = { layout: 'partials/layout.ejs' };
@@ -40,6 +41,7 @@ export async function accountRoutes(app: FastifyInstance) {
 
     await setPassword(app.db, user.id, password);
     user.must_change_password = 0;
+    logAudit(app.db, req, { action: 'password', entity: 'user', entityId: user.id, label: `${user.display_name} (${user.username})`, details: ['Changé par la personne elle-même'] });
     // Déconnecte les autres appareils, garde la session en cours.
     deleteOtherSessions(app.db, user.id, req.sessionId!);
     return reply.view(

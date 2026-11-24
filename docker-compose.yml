@@ -2,7 +2,8 @@
 # Interfas Display — affichage atelier
 # URL      : https://${DISPLAY_HOST} (LAN + VPN uniquement, via Traefik v2.11)
 # Réseau   : "proxy" (externe, Traefik). Aucun port publié sur l'hôte.
-# Volume   : interfas-data (base SQLite) — À SAUVEGARDER
+# Volume   : interfas-data (base SQLite + images)
+# Backups  : ./backups (quotidien, 7 jours + 4 semaines)
 # =====================================================================
 services:
   app:
@@ -16,8 +17,10 @@ services:
       TZ: Europe/Paris
       COOKIE_SECURE: "true"      # TLS terminé par Traefik : cookie de session HTTPS uniquement
       TRUST_PROXY: "true"        # vraie IP du client via X-Forwarded-For (limite de connexions)
+      BACKUP_DIR: /app/backups   # sauvegarde quotidienne (base + images), voir ./backups
     volumes:
       - interfas-data:/app/data
+      - ./backups:/app/backups   # sur le serveur, à côté de ce fichier (appartient à l'UID 1000)
     networks:
       - proxy
     mem_limit: 256m

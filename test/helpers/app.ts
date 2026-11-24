@@ -10,7 +10,8 @@ export const PASSWORD = 'motdepasse-solide';
 
 export async function makeApp(): Promise<FastifyInstance> {
   const mediaDir = fs.mkdtempSync(path.join(os.tmpdir(), 'interfas-media-'));
-  return buildApp({ ...loadConfig({}), databasePath: ':memory:', mediaDir, logLevel: 'silent' });
+  const backupDir = fs.mkdtempSync(path.join(os.tmpdir(), 'interfas-backups-'));
+  return buildApp({ ...loadConfig({}), databasePath: ':memory:', mediaDir, backupDir, backupTime: '', logLevel: 'silent' });
 }
 
 export function form(data: Record<string, string | string[]>) {

@@ -1,0 +1,50 @@
+<%- include('../../partials/settings-tabs', { active: 'history' }) %>
+<div class="page-head">
+  <div>
+    <h1>Paramètres · Historique</h1>
+    <p class="muted">Qui a modifié quoi, et quand. Conservé un an.</p>
+  </div>
+</div>
+
+<form method="get" action="/admin/history" class="history-filters">
+  <label class="field">Personne
+    <select name="user">
+      <option value="">Tout le monde</option>
+      <% users.forEach((u) => { %><option value="<%= u.id %>" <%= filter.userId === u.id ? 'selected' : '' %>><%= u.display_name %></option><% }) %>
+    </select>
+  </label>
+  <label class="field">Élément
+    <select name="entity">
+      <option value="">Tous</option>
+      <% entities.forEach(([value, label]) => { %><option value="<%= value %>" <%= filter.entity === value ? 'selected' : '' %>><%= label %></option><% }) %>
+    </select>
+  </label>
+  <button type="submit" class="btn">Filtrer</button>
+  <% if (filter.userId || filter.entity) { %><a href="/admin/history">Tout afficher</a><% } %>
+</form>
+
+<% if (!entries.length) { %>
+  <p class="muted">Aucune action enregistrée<%= (filter.userId || filter.entity) ? ' pour ce filtre' : '' %>.</p>
+<% } else { %>
+  <table class="user-table history-table">
+    <thead><tr><th>Date</th><th>Personne</th><th>Action</th><th>Élément</th><th>Détails</th></tr></thead>
+    <tbody>
+      <% entries.forEach((e) => { %>
+        <tr class="action-<%= e.action %>">
+          <td data-label="Date" class="small nowrap"><%= e.when %></td>
+          <td data-label="Personne"><%= e.username || '—' %></td>
+          <td data-label="Action"><span class="badge <%= e.action === 'login_failed' ? 'status-scheduled' : e.action === 'delete' ? 'status-disabled' : 'neutral' %>"><%= e.actionLabel %></span></td>
+          <td data-label="Élément"><span class="muted small"><%= e.entityLabel %></span> <%= e.label %></td>
+          <td data-label="Détails" class="small">
+            <% if (e.details.length) { %><ul class="history-details"><% e.details.forEach((d) => { %><li><%= d %></li><% }) %></ul><% } %>
+            <% if (e.ip && (e.action === 'login' || e.action === 'login_failed')) { %><span class="muted">IP <%= e.ip %></span><% } %>
+          </td>
+        </tr>
+      <% }) %>
+    </tbody>
+  </table>
+  <nav class="pager">
+    <% if (prevUrl) { %><a class="btn" href="/admin/history<%= prevUrl === '?' ? '' : prevUrl %>">← Plus récent</a><% } %>
+    <% if (nextUrl) { %><a class="btn" href="/admin/history<%= nextUrl %>">Plus ancien →</a><% } %>
+  </nav>
+<% } %>

@@ -3,6 +3,7 @@ import rateLimit from '@fastify/rate-limit';
 import { getDummyHash, verifyPassword } from '../auth/password.js';
 import { createSession, deleteSession } from '../auth/sessions.js';
 import { findUserByUsername, touchLastLogin } from '../auth/users.js';
+import { logAudit } from '../audit.js';
 import { SESSION_COOKIE, sessionCookieOptions } from '../auth/plugin.js';
 
 const LAYOUT = { layout: 'partials/auth-layout.ejs' };
@@ -37,6 +38,11 @@ export async function authRoutes(app: FastifyInstance) {
       // Compte désactivé : même réponse qu'un mauvais mot de passe.
       if (!user || !ok || !user.is_active) {
         req.log.warn({ username }, 'échec de connexion');
+        logAudit(app.db, req, {
+          action: 'login_failed', entity: 'session', user: user ? { id: user.id, display_name: user.display_name } : null,
+          username: user?.display_name ?? '', label: username.slice(0, 64),
+          details: user && ok && !user.is_active ? ['Compte désactivé'] : [],
+        });
         return reply
           .code(401)
           .view('admin/login.ejs', { title: 'Connexion', error: 'Identifiant ou mot de passe incorrect.', username, next }, LAYOUT);
@@ -45,6 +51,7 @@ export async function authRoutes(app: FastifyInstance) {
       if (req.sessionId) deleteSession(app.db, req.sessionId);
       const sessionId = createSession(app.db, user.id);
       touchLastLogin(app.db, user.id);
+      logAudit(app.db, req, { action: 'login', entity: 'session', user, label: user.username });
       reply.setCookie(SESSION_COOKIE, sessionId, sessionCookieOptions(app.config.cookieSecure));
       return reply.redirect(next, 303);
     },
@@ -52,6 +59,7 @@ export async function authRoutes(app: FastifyInstance) {
 
   app.post('/logout', async (req, reply) => {
     if (req.sessionId) deleteSession(app.db, req.sessionId);
+    if (req.user) logAudit(app.db, req, { action: 'logout', entity: 'session', label: req.user.username });
     reply.clearCookie(SESSION_COOKIE, { path: '/' });
     return reply.redirect('/admin/login', 303);
   });

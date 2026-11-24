@@ -13,6 +13,21 @@ import {
   type TemplateInput,
 } from '../content/templates.js';
 
+import { diff, logAudit, yesNo } from '../audit.js';
+
+type TemplateForm = { name: string; theme: string; frame: string; show_logo: number; is_default: number; default_signature_name: string; default_signature_role: string };
+const THEME_LABEL = (v: unknown) => THEMES.find((t) => t.value === v)?.label.split(' (')[0] ?? String(v);
+const FRAME_LABEL = (v: unknown) => FRAMES.find((f) => f.value === v)?.label ?? String(v);
+const TEMPLATE_SPECS = [
+  { label: 'Nom', get: (t: TemplateForm) => t.name },
+  { label: 'Thème', get: (t: TemplateForm) => t.theme, format: THEME_LABEL },
+  { label: 'Cadre', get: (t: TemplateForm) => t.frame, format: FRAME_LABEL },
+  { label: 'Logo', get: (t: TemplateForm) => !!t.show_logo, format: yesNo },
+  { label: 'Par défaut', get: (t: TemplateForm) => !!t.is_default, format: yesNo },
+  { label: 'Signature par défaut (nom)', get: (t: TemplateForm) => t.default_signature_name },
+  { label: 'Signature par défaut (fonction)', get: (t: TemplateForm) => t.default_signature_role },
+];
+
 const LAYOUT = { layout: 'partials/layout.ejs' };
 type IdParams = { Params: { id: string } };
 type FormBody = Record<string, string | undefined>;
@@ -86,7 +101,10 @@ export async function templateRoutes(app: FastifyInstance) {
     const { input, errors } = validateTemplate(req.body ?? {});
     if (!Object.keys(errors).length) {
       const res = createTemplate(app.db, input);
-      if (!res.error) return reply.redirect('/admin/templates', 303);
+      if (!res.error) {
+        logAudit(app.db, req, { action: 'create', entity: 'template', entityId: res.id, label: input.name });
+        return reply.redirect('/admin/templates', 303);
+      }
       errors.name = res.error;
     }
     return renderForm(reply, { template: toForm(input), errors }, 400);
@@ -101,11 +119,16 @@ export async function templateRoutes(app: FastifyInstance) {
 
   app.post<IdParams & { Body: FormBody }>('/:id', async (req, reply) => {
     const id = parseId(req.params.id);
-    if (!id || !getTemplate(app.db, id)) return reply.code(404).view('admin/not-found.ejs', { title: 'Introuvable', user: req.user }, LAYOUT);
+    const before = id ? getTemplate(app.db, id) : undefined;
+    if (!id || !before) return reply.code(404).view('admin/not-found.ejs', { title: 'Introuvable', user: req.user }, LAYOUT);
     const { input, errors } = validateTemplate(req.body ?? {});
     if (!Object.keys(errors).length) {
       const res = updateTemplate(app.db, id, input);
-      if (!res.error) return reply.redirect('/admin/templates', 303);
+      if (!res.error) {
+        const changes = diff<TemplateForm>(before, toForm(input, id), TEMPLATE_SPECS);
+        if (changes.length) logAudit(app.db, req, { action: 'update', entity: 'template', entityId: id, label: input.name, details: changes });
+        return reply.redirect('/admin/templates', 303);
+      }
       errors.name = res.error;
     }
     return renderForm(reply, { template: toForm(input, id), errors }, 400);
@@ -113,8 +136,10 @@ export async function templateRoutes(app: FastifyInstance) {
 
   app.post<IdParams>('/:id/delete', async (req, reply) => {
     const id = parseId(req.params.id);
+    const gone = id ? getTemplate(app.db, id) : undefined;
     const res = id ? deleteTemplate(app.db, id) : { error: 'Template introuvable.' };
     if (res.error) return renderList(reply, res.error, 400);
+    logAudit(app.db, req, { action: 'delete', entity: 'template', entityId: id, label: gone?.name });
     return reply.redirect('/admin/templates', 303);
   });
 }
