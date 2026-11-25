@@ -26,6 +26,9 @@
   --brand-beige: #E7E3D8;
   --brand-white: #FFFFFF;
   --brand-gray: #5C574F;       /* gris fonctionnel */
+  /* Bordeaux : titres des messages à l'écran. Le rouge écrit est mal perçu
+     (impoli, « correction de prof ») ; contraste 6,9:1 sur beige contre 3,5:1. */
+  --brand-bordeaux: #8E1F2F;
 
   --font-brand: 'Sora', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
   --radius: 8px;
