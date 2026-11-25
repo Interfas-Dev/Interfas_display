@@ -42,6 +42,15 @@ services:
       - traefik.http.routers.display-http.middlewares=display-https
       - traefik.http.middlewares.display-https.redirectscheme.scheme=https
       - traefik.http.middlewares.display-https.redirectscheme.permanent=true
+      # Écran de l'atelier en HTTP simple (sans redirection) : l'URL Launcher des
+      # télés Samsung refuse le certificat interne. Seuls l'écran et ses fichiers
+      # (lecture seule, sans connexion) sont servis ainsi ; l'admin reste en HTTPS.
+      # Adresse à donner à la télé : http://${DISPLAY_HOST}/display
+      - traefik.http.routers.display-tv.rule=Host(`${DISPLAY_HOST}`) && (Path(`/display`) || PathPrefix(`/display/`) || PathPrefix(`/public/`) || PathPrefix(`/media/`))
+      - traefik.http.routers.display-tv.entrypoints=${TRAEFIK_EP_HTTP}
+      - traefik.http.routers.display-tv.priority=100
+      - traefik.http.routers.display-tv.service=display
+      - traefik.http.routers.display-tv.middlewares=display-lan
       # Pas de middleware compress / buffering : le flux temps réel (SSE)
       # de /display/events doit passer tel quel.
 networks:
