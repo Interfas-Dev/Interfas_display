@@ -23,3 +23,12 @@ describe('dépôt', () => {
     expect(ignored.trim()).toBe('');
   });
 });
+
+describe('compatibilité de l’écran de l’atelier', () => {
+  it('n’utilise pas « inset » (inconnu des navigateurs de télé anciens)', () => {
+    for (const f of ['public/css/display.css', 'public/css/message.css']) {
+      const css = fs.readFileSync(f, 'utf8').replace(/\/\*[\s\S]*?\*\//g, '');
+      expect(css, f).not.toMatch(/(^|[;{\s])inset\s*:/);
+    }
+  });
+});
