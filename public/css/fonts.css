@@ -1,0 +1,21 @@
+/*
+ * Polices proposées dans les templates (SIL OFL 1.1, licences dans chaque
+ * dossier de public/fonts). Servies en local : l'écran n'a pas besoin d'internet.
+ * Le navigateur ne télécharge que celles réellement utilisées.
+ */
+@font-face { font-family: 'Inter'; font-style: normal; font-weight: 400; font-display: swap; src: url(/public/fonts/inter/inter-latin-400-normal.woff2) format('woff2'); }
+@font-face { font-family: 'Inter'; font-style: normal; font-weight: 700; font-display: swap; src: url(/public/fonts/inter/inter-latin-700-normal.woff2) format('woff2'); }
+@font-face { font-family: 'Montserrat'; font-style: normal; font-weight: 400; font-display: swap; src: url(/public/fonts/montserrat/montserrat-latin-400-normal.woff2) format('woff2'); }
+@font-face { font-family: 'Montserrat'; font-style: normal; font-weight: 700; font-display: swap; src: url(/public/fonts/montserrat/montserrat-latin-700-normal.woff2) format('woff2'); }
+@font-face { font-family: 'Lato'; font-style: normal; font-weight: 400; font-display: swap; src: url(/public/fonts/lato/lato-latin-400-normal.woff2) format('woff2'); }
+@font-face { font-family: 'Lato'; font-style: normal; font-weight: 700; font-display: swap; src: url(/public/fonts/lato/lato-latin-700-normal.woff2) format('woff2'); }
+@font-face { font-family: 'Open Sans'; font-style: normal; font-weight: 400; font-display: swap; src: url(/public/fonts/open-sans/open-sans-latin-400-normal.woff2) format('woff2'); }
+@font-face { font-family: 'Open Sans'; font-style: normal; font-weight: 700; font-display: swap; src: url(/public/fonts/open-sans/open-sans-latin-700-normal.woff2) format('woff2'); }
+@font-face { font-family: 'Oswald'; font-style: normal; font-weight: 400; font-display: swap; src: url(/public/fonts/oswald/oswald-latin-400-normal.woff2) format('woff2'); }
+@font-face { font-family: 'Oswald'; font-style: normal; font-weight: 700; font-display: swap; src: url(/public/fonts/oswald/oswald-latin-700-normal.woff2) format('woff2'); }
+@font-face { font-family: 'Roboto Slab'; font-style: normal; font-weight: 400; font-display: swap; src: url(/public/fonts/roboto-slab/roboto-slab-latin-400-normal.woff2) format('woff2'); }
+@font-face { font-family: 'Roboto Slab'; font-style: normal; font-weight: 700; font-display: swap; src: url(/public/fonts/roboto-slab/roboto-slab-latin-700-normal.woff2) format('woff2'); }
+@font-face { font-family: 'Merriweather'; font-style: normal; font-weight: 400; font-display: swap; src: url(/public/fonts/merriweather/merriweather-latin-400-normal.woff2) format('woff2'); }
+@font-face { font-family: 'Merriweather'; font-style: normal; font-weight: 700; font-display: swap; src: url(/public/fonts/merriweather/merriweather-latin-700-normal.woff2) format('woff2'); }
+@font-face { font-family: 'Playfair Display'; font-style: normal; font-weight: 400; font-display: swap; src: url(/public/fonts/playfair-display/playfair-display-latin-400-normal.woff2) format('woff2'); }
+@font-face { font-family: 'Playfair Display'; font-style: normal; font-weight: 700; font-display: swap; src: url(/public/fonts/playfair-display/playfair-display-latin-700-normal.woff2) format('woff2'); }

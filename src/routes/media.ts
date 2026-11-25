@@ -57,6 +57,8 @@ export async function mediaUploadRoutes(app: FastifyInstance) {
 
   app.post('/', { bodyLimit: VIDEO_MAX_BYTES }, async (req, reply) => {
     const declared = String(req.headers['content-type'] ?? '').split(';')[0]!.trim();
+    // Les polices passent par Paramètres › Templates (administrateurs).
+    if (declared.startsWith('font/')) return reply.code(415).send({ error: 'Les polices s\'ajoutent depuis un template.' });
     try {
       const { file, mime } = await saveMediaStream(app.db, app.config.mediaDir, req.body as NodeJS.ReadableStream as never, declared, req.user!.id);
       return reply.code(201).send({ file, url: `/media/${file}`, kind: mime.startsWith('video/') ? 'video' : 'image' });

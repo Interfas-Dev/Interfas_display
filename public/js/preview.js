@@ -18,8 +18,14 @@
 
   function update() {
     var t = current();
-    frame.className = 'slide-frame theme-' + t.theme + ' frame-' + t.frame;
-    if (surface) surface.className = 'editor-surface theme-' + t.theme;
+    var look = t.look || { css: '', logoSrc: '/public/img/logo-interfas.png' };
+    frame.className = 'slide-frame theme-' + t.theme + ' frame-' + t.frame + (look.logoRight ? ' logo-right' : '') + (look.customLogo ? ' logo-custom' : '');
+    frame.style.cssText = look.css;
+    frame.querySelector('.slide-logo').src = look.logoSrc;
+    if (surface) {
+      surface.className = 'editor-surface theme-' + t.theme;
+      surface.style.cssText = look.css;
+    }
 
     var h = heading.value.trim();
     var logo = frame.querySelector('.slide-logo');

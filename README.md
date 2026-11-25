@@ -89,6 +89,12 @@ Les fichiers sont envoyés en flux (pas de copie en mémoire) et leur format ré
 
 Les fichiers retirés de tous les messages sont supprimés au bout de 24 h.
 
+## Templates personnalisables
+
+Paramètres › Templates (administrateurs) : chaque template règle les couleurs (fond, dégradé ou image de fond, texte, titre, puces, fonction), les polices du titre et du texte, les tailles et alignements, le logo (Interfas ou un logo envoyé, taille, position), le filet et les marges, avec un aperçu en direct. Un avertissement s'affiche si le texte ou le titre est peu lisible sur le fond (contraste WCAG).
+
+Polices proposées : Sora (charte), Inter, Montserrat, Lato, Open Sans, Oswald, Roboto Slab, Merriweather, Playfair Display (SIL OFL, servies en local depuis `public/fonts`). On peut ajouter une police (WOFF2, WOFF, TTF ou OTF, 2 Mo) depuis le formulaire ; vérifier que sa licence autorise cet usage. Les templates existants gardent leur rendu tant qu'ils ne sont pas réenregistrés. « Dupliquer » crée une copie à modifier.
+
 ## Sauvegardes
 
 Chaque jour à 3 h (`BACKUP_TIME`, heure de l'atelier), l'application copie à chaud la base SQLite, les images et les vidéos dans un dossier daté de `./backups` sur le serveur (monté dans le conteneur sur `/app/backups`). On garde les 7 derniers jours et une sauvegarde par semaine sur 4 semaines. Un fichier déjà présent dans la sauvegarde précédente n'est pas recopié mais relié (lien physique) : une vidéo n'occupe sa place qu'une fois, quel que soit le nombre de sauvegardes. La page affiche aussi l'espace libre du disque. Paramètres › Sauvegardes liste les sauvegardes et propose « Sauvegarder maintenant ».

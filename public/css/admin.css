@@ -298,3 +298,25 @@ label.btn { cursor: pointer; }
 .video-full .checkbox { flex-direction: row; align-items: center; gap: 0.5rem; font-weight: 400; display: flex; }
 .image-tools [hidden] { display: none; }
 .image-actions [hidden], .video-full [hidden] { display: none; }
+
+/* --- Réglages de style d'un template --- */
+.color-grid { display: flex; flex-wrap: wrap; gap: 0.5rem 1.25rem; }
+.color-field { display: inline-flex; align-items: center; gap: 0.5rem; font-weight: 400; }
+.color-field[hidden] { display: none; }
+.color-field input[type=color] { width: 2.75rem; height: 2.25rem; padding: 0.15rem; border: 1px solid var(--border); border-radius: var(--radius); background: var(--brand-white); cursor: pointer; }
+.brand-swatches { display: flex; flex-wrap: wrap; align-items: center; gap: 0.35rem; }
+.swatch-chip { display: inline-flex; align-items: center; gap: 0.3rem; font-size: 0.75rem; font-family: ui-monospace, monospace; color: var(--text-muted); }
+.swatch-chip::before { content: ''; width: 0.9rem; height: 0.9rem; border-radius: 3px; background: var(--swatch); box-shadow: inset 0 0 0 1px rgba(0,0,0,0.25); }
+.range-line { display: flex; align-items: center; gap: 0.6rem; }
+.range-line input[type=range] { flex: 1; min-width: 0; accent-color: var(--brand-black); }
+.range-line output { min-width: 4.2rem; font-weight: 400; font-variant-numeric: tabular-nums; text-align: right; }
+.upload-line { display: flex; flex-wrap: wrap; align-items: center; gap: 0.5rem; }
+.upload-line [hidden] { display: none; }
+.contrast-warning { margin: 0; padding: 0.5rem 0.75rem; border-radius: var(--radius); background: var(--state-wait-bg); color: var(--state-wait-fg); font-size: 0.9rem; }
+.contrast-warning[hidden] { display: none; }
+.font-upload summary { cursor: pointer; font-weight: 700; font-size: 0.9rem; }
+.font-upload[open] { display: flex; flex-direction: column; gap: 0.5rem; }
+.preview-col .hint { margin-top: 0.5rem; }
+.font-list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 0.5rem; }
+.font-list li { display: flex; align-items: center; justify-content: space-between; gap: 1rem; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 0.5rem 0.75rem; }
+.font-sample { font-size: 1.15rem; }

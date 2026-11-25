@@ -160,4 +160,20 @@ export const migrations: Migration[] = [
       ALTER TABLE messages ADD COLUMN video_sound INTEGER NOT NULL DEFAULT 0;
     `,
   },
+  {
+    version: 10,
+    name: 'template_styles',
+    sql: `
+      -- Réglages de style personnalisés (JSON, voir src/content/style.ts).
+      -- '{}' : rendu du thème de la charte, comme avant.
+      ALTER TABLE templates ADD COLUMN style_json TEXT NOT NULL DEFAULT '{}';
+      -- Polices envoyées (fichier dans le dossier des médias).
+      CREATE TABLE fonts (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        name TEXT NOT NULL,
+        file TEXT NOT NULL UNIQUE,
+        created_at TEXT NOT NULL DEFAULT (datetime('now'))
+      );
+    `,
+  },
 ];

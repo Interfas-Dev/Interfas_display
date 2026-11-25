@@ -34,6 +34,7 @@ export interface Message {
   theme: Theme;
   frame: Frame;
   show_logo: number;
+  style_json: string;
   /** Signature affichée : celle du message, sinon celle par défaut du template. */
   sig_name: string;
   sig_role: string;
@@ -108,6 +109,7 @@ const SELECT = `SELECT m.*, u.display_name AS updated_by_name,
     COALESCE(t.theme, 'light') AS theme,
     COALESCE(t.frame, 'none') AS frame,
     COALESCE(t.show_logo, 1) AS show_logo,
+    COALESCE(t.style_json, '{}') AS style_json,
     CASE WHEN m.signature_name != '' OR m.signature_role != '' THEN m.signature_name
          ELSE COALESCE(t.default_signature_name, '') END AS sig_name,
     CASE WHEN m.signature_name != '' OR m.signature_role != '' THEN m.signature_role

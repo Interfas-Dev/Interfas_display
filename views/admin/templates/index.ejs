@@ -2,7 +2,7 @@
 <div class="page-head">
   <div>
     <h1>Paramètres · Templates</h1>
-    <p class="muted">Un template fixe l'apparence des messages : thème, cadre, logo et signature par défaut. Le modifier met à jour tous les messages qui l'utilisent.</p>
+    <p class="muted">Un template fixe l'apparence des messages : couleurs, polices, tailles, fond, logo, cadre et signature par défaut. Le modifier met à jour tous les messages qui l'utilisent.</p>
   </div>
   <a class="btn primary" href="/admin/templates/new">Nouveau template</a>
 </div>
@@ -13,7 +13,7 @@
   <% templates.forEach((t) => { %>
     <li class="template-card">
       <a class="thumb" href="/admin/templates/<%= t.id %>/edit" aria-label="Modifier <%= t.name %>">
-        <div class="screen-preview"><%- include('../../partials/slide', { m: { ...sample, theme: t.theme, frame: t.frame, show_logo: t.show_logo,
+        <div class="screen-preview"><%- include('../../partials/slide', { m: { ...sample, theme: t.theme, frame: t.frame, show_logo: t.show_logo, style_json: t.style_json,
           sig_name: t.default_signature_name || sample.signature_name, sig_role: t.default_signature_role || sample.signature_role } }) %></div>
       </a>
       <div class="template-info">
@@ -25,6 +25,9 @@
       </div>
       <div class="message-actions">
         <a class="btn" href="/admin/templates/<%= t.id %>/edit">Modifier</a>
+        <form method="post" action="/admin/templates/<%= t.id %>/duplicate" class="inline">
+          <button class="btn">Dupliquer</button>
+        </form>
         <form method="post" action="/admin/templates/<%= t.id %>/delete" class="inline" data-confirm="Supprimer le template « <%= t.name %> » ?">
           <button class="btn danger" <%= t.usage_count > 0 ? 'disabled title="Utilisé par des messages"' : '' %>>Supprimer</button>
         </form>
@@ -32,3 +35,24 @@
     </li>
   <% }) %>
 </ul>
+
+<section class="fonts-section">
+  <h2>Polices ajoutées</h2>
+  <% if (!fonts.length) { %>
+    <p class="muted">Aucune police ajoutée. Les polices de la liste sont déjà disponibles ; tu peux en ajouter depuis un template (« Polices › Ajouter une police »).</p>
+  <% } else { %>
+    <ul class="font-list">
+      <% fonts.forEach((f) => { %>
+        <li>
+          <div>
+            <span class="font-sample" style="font-family:'tpl-font-<%= f.id %>', sans-serif"><%= f.name %></span>
+            <p class="muted small">Utilisée par <%= f.usage_count %> template<%= f.usage_count > 1 ? 's' : '' %></p>
+          </div>
+          <form method="post" action="/admin/templates/fonts/<%= f.id %>/delete" class="inline" data-confirm="Supprimer la police « <%= f.name %> » ?">
+            <button class="btn danger" <%= f.usage_count > 0 ? 'disabled title="Utilisée par des templates"' : '' %>>Supprimer</button>
+          </form>
+        </li>
+      <% }) %>
+    </ul>
+  <% } %>
+</section>

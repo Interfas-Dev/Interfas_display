@@ -8,6 +8,7 @@ export const ENTITIES = {
   user: 'Compte',
   session: 'Connexion',
   backup: 'Sauvegarde',
+  font: 'Police',
 } as const;
 export type Entity = keyof typeof ENTITIES;
 
