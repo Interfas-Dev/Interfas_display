@@ -82,7 +82,7 @@ La base SQLite est stockée dans le volume Docker `interfas-data` (préfixé par
 
 Dans le formulaire d'un message :
 
-- **Ajouter une image ou une vidéo** : PNG, JPG, WebP (5 Mo) ou MP4, WebM (200 Mo), à placer et redimensionner à la souris sur l'aperçu. Les vidéos tournent en boucle, sans le son sauf si « Son activé ».
+- **Ajouter une image ou une vidéo** : PNG, JPG, WebP (5 Mo), GIF animé (20 Mo) ou MP4, WebM (200 Mo), à placer et redimensionner à la souris sur l'aperçu. Les vidéos tournent en boucle, sans le son sauf si « Son activé ».
 - **Vidéo plein écran** : le message n'affiche que la vidéo et reste à l'écran le temps de sa lecture (la durée d'affichage est ignorée).
 
 Les fichiers sont envoyés en flux (pas de copie en mémoire) et leur format réel est vérifié. Préférer le MP4 en H.264, lu par tous les navigateurs. Pour que le son fonctionne sans clic sur l'écran de l'atelier, lancer le navigateur en mode kiosque avec la lecture automatique autorisée, par exemple `chromium --kiosk --autoplay-policy=no-user-gesture-required https://<DISPLAY_HOST>/display`. Sinon, la vidéo est lue sans le son.

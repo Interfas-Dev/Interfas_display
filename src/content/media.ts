@@ -8,28 +8,31 @@ import type { Db } from '../db/index.js';
 /** Tailles maximales : les images restent légères, les vidéos peuvent être longues. */
 export const IMAGE_MAX_BYTES = 5 * 1024 * 1024;
 export const VIDEO_MAX_BYTES = 200 * 1024 * 1024;
+/** Les GIF animés sont souvent plus lourds qu'une image fixe. */
+export const GIF_MAX_BYTES = 20 * 1024 * 1024;
 /** Compatibilité : ancienne constante (images). */
 export const MEDIA_MAX_BYTES = IMAGE_MAX_BYTES;
 
 /** Types acceptés. Le SVG est exclu : il peut contenir du script. */
-export const IMAGE_TYPES = ['image/png', 'image/jpeg', 'image/webp'] as const;
+export const IMAGE_TYPES = ['image/png', 'image/jpeg', 'image/webp', 'image/gif'] as const;
 export const VIDEO_TYPES = ['video/mp4', 'video/webm'] as const;
 export const MEDIA_TYPES = [...IMAGE_TYPES, ...VIDEO_TYPES] as const;
 export type MediaType = (typeof MEDIA_TYPES)[number];
 
 /** Nom de fichier stocké : <uuid>.<ext>. */
-export const MEDIA_FILE_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}\.(png|jpg|webp|mp4|webm)$/;
+export const MEDIA_FILE_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}\.(png|jpg|webp|gif|mp4|webm)$/;
 export const VIDEO_FILE_RE = /\.(mp4|webm)$/;
 
 const EXT: Record<MediaType, string> = {
-  'image/png': 'png', 'image/jpeg': 'jpg', 'image/webp': 'webp', 'video/mp4': 'mp4', 'video/webm': 'webm',
+  'image/png': 'png', 'image/jpeg': 'jpg', 'image/webp': 'webp', 'image/gif': 'gif', 'video/mp4': 'mp4', 'video/webm': 'webm',
 };
 export const MIME_BY_EXT: Record<string, MediaType> = {
-  png: 'image/png', jpg: 'image/jpeg', webp: 'image/webp', mp4: 'video/mp4', webm: 'video/webm',
+  png: 'image/png', jpg: 'image/jpeg', webp: 'image/webp', gif: 'image/gif', mp4: 'video/mp4', webm: 'video/webm',
 };
 
 export const isVideo = (file: string) => VIDEO_FILE_RE.test(file);
-export const maxBytesFor = (mime: string) => (mime.startsWith('video/') ? VIDEO_MAX_BYTES : IMAGE_MAX_BYTES);
+export const maxBytesFor = (mime: string) =>
+  mime.startsWith('video/') ? VIDEO_MAX_BYTES : mime === 'image/gif' ? GIF_MAX_BYTES : IMAGE_MAX_BYTES;
 
 /** Reconnaît le format réel d'après les premiers octets (sans se fier à l'en-tête envoyé). */
 export function detectMediaType(buf: Buffer): MediaType | null {
@@ -40,6 +43,8 @@ export function detectMediaType(buf: Buffer): MediaType | null {
   if (buf.length >= 12 && buf.toString('latin1', 0, 4) === 'RIFF' && buf.toString('latin1', 8, 12) === 'WEBP') {
     return 'image/webp';
   }
+  // GIF (fixe ou animé)
+  if (buf.length >= 6 && /^GIF8[79]a$/.test(buf.toString('latin1', 0, 6))) return 'image/gif';
   // MP4 / MOV ISO : boîte « ftyp » en tête
   if (buf.length >= 12 && buf.toString('latin1', 4, 8) === 'ftyp') return 'video/mp4';
   // WebM (Matroska / EBML)
@@ -96,11 +101,16 @@ export async function saveMediaStream(
     }
     out.end();
     await closed;
-    if (tooBig) throw new MediaError(413, limit === VIDEO_MAX_BYTES ? 'Vidéo trop lourde : 200 Mo maximum.' : 'Image trop lourde : 5 Mo maximum.');
+    if (tooBig) {
+      throw new MediaError(
+        413,
+        limit === VIDEO_MAX_BYTES ? 'Vidéo trop lourde : 200 Mo maximum.' : limit === GIF_MAX_BYTES ? 'GIF trop lourd : 20 Mo maximum.' : 'Image trop lourde : 5 Mo maximum.',
+      );
+    }
     if (!size) throw new MediaError(400, 'Fichier vide.');
     const mime = detectMediaType(head);
     if (!mime || mime.split('/')[0] !== declared.split('/')[0]) {
-      throw new MediaError(415, 'Format non reconnu : PNG, JPG, WebP, MP4 ou WebM uniquement.');
+      throw new MediaError(415, 'Format non reconnu : PNG, JPG, WebP, GIF, MP4 ou WebM uniquement.');
     }
     const file = `${randomUUID()}.${EXT[mime]}`;
     await fs.rename(tmp, path.join(dir, file));
