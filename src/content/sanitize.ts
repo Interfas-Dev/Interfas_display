@@ -8,6 +8,7 @@ export const BRAND_COLORS = [
   { name: 'blanc', value: '#FFFFFF' },
   { name: 'beige', value: '#E7E3D8' },
   { name: 'rouge', value: '#DE3619' },
+  { name: 'bordeaux', value: '#8E1F2F' },
   { name: 'grège', value: '#7F776C' },
   { name: 'noir chaud', value: '#221B13' },
 ] as const;
