@@ -73,6 +73,7 @@ Points d'attention :
 
 - `DISPLAY_HOST` doit être couvert par le certificat wildcard et résolu par le DNS du LAN vers le serveur.
 - L'écran d'affichage doit être dans `DISPLAY_ALLOWED_IPS`, sinon Traefik renvoie 403.
+- Télé Samsung avec l'URL Launcher : donner `http://<DISPLAY_HOST>/display` (en HTTP). L'URL Launcher refuse les certificats qu'il ne reconnaît pas (« Impossible de télécharger l'application Web »). Seuls l'écran et ses fichiers sont servis en HTTP ; l'administration reste en HTTPS.
 - Ne pas ajouter de middleware `compress` ni `buffering` : le flux temps réel `/display/events` (SSE) doit passer tel quel.
 - En Docker, `COOKIE_SECURE` et `TRUST_PROXY` sont forcés à `true` : la connexion à l'admin ne fonctionne donc qu'en HTTPS.
 
