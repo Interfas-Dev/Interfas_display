@@ -1,9 +1,28 @@
+<%
+  const s = style;
+  const brand = [['Rouge', '#DE3619'], ['Bordeaux', '#8E1F2F'], ['Noir chaud', '#221B13'], ['Grège', '#7F776C'], ['Beige', '#E7E3D8'], ['Gris', '#5C574F'], ['Blanc', '#FFFFFF']];
+  const aligns = [['left', 'À gauche'], ['center', 'Centré'], ['right', 'À droite']];
+  const color = (name, label, value) => `<label class="color-field"><input type="color" name="s_${name}" value="${value.toLowerCase()}" list="brand-colors" data-style="${name}"><span>${label}</span></label>`;
+  const range = (name, label, value, min, max, step, unit) =>
+    `<label class="field range-field">${label}<span class="range-line"><input type="range" name="s_${name}" min="${min}" max="${max}" step="${step}" value="${value}" data-style="${name}"><output data-unit="${unit}"></output></span></label>`;
+  const select = (name, label, value, options) =>
+    `<label class="field">${label}<select name="s_${name}" data-style="${name}">${options.map(([v, l]) => `<option value="${v}"${String(value) === String(v) ? ' selected' : ''}>${l}</option>`).join('')}</select></label>`;
+  const esc = (v) => String(v).replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;');
+  const fontOptions = fonts.map((f) => [f.key, esc(f.label)]);
+%>
 <div class="page-head">
   <h1><%= title %></h1>
   <a href="/admin/templates">← Retour aux templates</a>
 </div>
 
-<form method="post" action="/admin/templates<%= template.id ? '/' + template.id : '' %>" class="message-form" id="template-form">
+<datalist id="brand-colors">
+  <% brand.forEach(([l, v]) => { %><option value="<%= v.toLowerCase() %>"><%= l %></option><% }) %>
+</datalist>
+
+<form method="post" action="/admin/templates<%= template.id ? '/' + template.id : '' %>" class="message-form" id="template-form"
+      data-presets="<%= JSON.stringify(presets) %>" data-fonts="<%= JSON.stringify(fonts) %>">
+  <input type="hidden" name="s_present" value="1">
+  <input type="hidden" name="frame" value="<%= template.frame %>">
   <div class="editor-col">
     <label class="field">Nom
       <input name="name" value="<%= template.name %>" maxlength="<%= nameMax %>" required>
@@ -11,36 +30,133 @@
     </label>
 
     <fieldset class="field-group">
-      <legend>Thème</legend>
+      <legend>Thème de départ</legend>
       <% themes.forEach((t) => { %>
         <label class="radio"><input type="radio" name="theme" value="<%= t.value %>" <%= template.theme === t.value ? 'checked' : '' %>> <%= t.label %></label>
       <% }) %>
+      <span class="hint">Choisir un thème remet ses couleurs ; tu peux ensuite tout ajuster ci-dessous.</span>
     </fieldset>
 
     <fieldset class="field-group">
-      <legend>Cadre</legend>
-      <% frames.forEach((f) => { %>
-        <label class="radio"><input type="radio" name="frame" value="<%= f.value %>" <%= template.frame === f.value ? 'checked' : '' %>> <%= f.label %></label>
-      <% }) %>
+      <legend>Couleurs</legend>
+      <div class="color-grid">
+        <%- color('bg', 'Fond', s.bg) %>
+        <%- color('text', 'Texte', s.text) %>
+        <%- color('heading', 'Titre', s.heading) %>
+        <%- color('marker', 'Puces', s.marker) %>
+        <%- color('muted', 'Fonction (signature)', s.muted) %>
+      </div>
+      <div class="brand-swatches" aria-label="Couleurs de la charte">
+        <span class="hint">Charte :</span>
+        <% brand.forEach(([l, v]) => { %><span class="swatch-chip" style="--swatch:<%= v %>" title="<%= l %> <%= v %>"><%= v %></span><% }) %>
+      </div>
+      <p class="contrast-warning" id="contrast-warning" role="status" hidden></p>
     </fieldset>
 
-    <label class="checkbox">
-      <input type="checkbox" name="show_logo" value="on" <%= template.show_logo ? 'checked' : '' %>>
-      Afficher le logo dans l'en-tête
-    </label>
+    <fieldset class="field-group">
+      <legend>Fond</legend>
+      <label class="checkbox"><input type="checkbox" id="bg-gradient" <%= s.bg2 ? 'checked' : '' %>> Dégradé vers une seconde couleur</label>
+      <label class="color-field" id="bg2-field"<%= s.bg2 ? '' : ' hidden' %>><input type="color" name="s_bg2" value="<%= (s.bg2 || s.bg).toLowerCase() %>" list="brand-colors" data-style="bg2"<%= s.bg2 ? '' : ' disabled' %>><span>Seconde couleur</span></label>
+      <input type="hidden" name="s_bgImage" id="s_bgImage" value="<%= s.bgImage %>" data-style="bgImage">
+      <div class="upload-line">
+        <button type="button" class="btn" data-upload="bgImage">Choisir une image de fond</button>
+        <button type="button" class="btn" data-clear="bgImage"<%= s.bgImage ? '' : ' hidden' %>>Retirer l'image</button>
+        <span class="hint" data-upload-status="bgImage"><%= s.bgImage ? 'Image de fond utilisée.' : '' %></span>
+      </div>
+      <span class="hint">L'image couvre toute la diapo, par-dessus la couleur de fond. PNG, JPG ou WebP, 5 Mo maximum.</span>
+    </fieldset>
 
     <fieldset class="field-group">
-      <legend>Signature par défaut</legend>
+      <legend>Polices</legend>
       <div class="field-row">
-        <label class="field">Nom
+        <%- select('fontHeading', 'Titre', s.fontHeading, fontOptions) %>
+        <%- select('fontBody', 'Texte et signature', s.fontBody, fontOptions) %>
+      </div>
+      <details class="font-upload">
+        <summary>Ajouter une police</summary>
+        <div class="field-row">
+          <label class="field">Nom de la police
+            <input id="font-name" maxlength="<%= fontNameMax %>" placeholder="Ex. : Police maison">
+          </label>
+          <label class="field">Fichier (WOFF2, WOFF, TTF ou OTF, 2 Mo)
+            <input type="file" id="font-file" accept=".woff2,.woff,.ttf,.otf">
+          </label>
+        </div>
+        <div class="upload-line">
+          <button type="button" class="btn" id="font-send">Ajouter la police</button>
+          <span class="hint" id="font-status" role="status"></span>
+        </div>
+        <span class="hint">Vérifie que la licence de la police autorise cet usage.</span>
+      </details>
+    </fieldset>
+
+    <fieldset class="field-group">
+      <legend>Titre</legend>
+      <div class="field-row">
+        <%- range('headingSize', 'Taille', s.headingSize, limits.headingSize[0], limits.headingSize[1], 0.05, 'em') %>
+        <%- select('headingAlign', 'Alignement', s.headingAlign, aligns) %>
+      </div>
+      <div class="field-row">
+        <%- select('headingWeight', 'Graisse', s.headingWeight, [['700', 'Gras'], ['400', 'Normal']]) %>
+        <label class="checkbox"><input type="checkbox" name="s_headingUpper" value="on" data-style="headingUpper" <%= s.headingUpper ? 'checked' : '' %>> En majuscules</label>
+      </div>
+    </fieldset>
+
+    <fieldset class="field-group">
+      <legend>Texte</legend>
+      <div class="field-row">
+        <%- range('bodySize', 'Taille', s.bodySize, limits.bodySize[0], limits.bodySize[1], 0.05, '%') %>
+        <%- select('bodyAlign', 'Alignement par défaut', s.bodyAlign, aligns) %>
+      </div>
+      <span class="hint">L'alignement choisi dans un message reste prioritaire.</span>
+    </fieldset>
+
+    <fieldset class="field-group">
+      <legend>Logo</legend>
+      <label class="checkbox">
+        <input type="checkbox" name="show_logo" value="on" <%= template.show_logo ? 'checked' : '' %>>
+        Afficher le logo dans l'en-tête
+      </label>
+      <input type="hidden" name="s_logo" id="s_logo" value="<%= s.logo %>" data-style="logo">
+      <div class="upload-line">
+        <button type="button" class="btn" data-upload="logo">Envoyer un autre logo</button>
+        <button type="button" class="btn" data-clear="logo"<%= s.logo === 'interfas' ? ' hidden' : '' %>>Reprendre le logo Interfas</button>
+        <span class="hint" data-upload-status="logo"><%= s.logo === 'interfas' ? 'Logo Interfas.' : 'Logo envoyé.' %></span>
+      </div>
+      <div class="field-row">
+        <%- range('logoSize', 'Taille', s.logoSize, limits.logoSize[0], limits.logoSize[1], 0.1, 'em') %>
+        <%- select('logoPos', 'Position', s.logoPos, [['left', 'À gauche du titre'], ['right', 'À droite du titre']]) %>
+      </div>
+    </fieldset>
+
+    <fieldset class="field-group">
+      <legend>Cadre et marges</legend>
+      <div class="field-row">
+        <%- range('frameWidth', 'Épaisseur du filet (0 = aucun)', s.frameWidth, limits.frameWidth[0], limits.frameWidth[1], 0.05, 'em') %>
+        <div class="color-grid"><%- color('frameColor', 'Couleur du filet', s.frameColor) %></div>
+      </div>
+      <div class="field-row">
+        <%- range('padX', 'Marge gauche et droite', s.padX, limits.padX[0], limits.padX[1], 0.1, 'em') %>
+        <%- range('padY', 'Marge haut et bas', s.padY, limits.padY[0], limits.padY[1], 0.1, 'em') %>
+      </div>
+    </fieldset>
+
+    <fieldset class="field-group">
+      <legend>Signature</legend>
+      <div class="field-row">
+        <label class="field">Nom par défaut
           <input name="default_signature_name" id="default_signature_name" value="<%= template.default_signature_name %>" maxlength="<%= signatureMax %>">
         </label>
-        <label class="field">Fonction
+        <label class="field">Fonction par défaut
           <input name="default_signature_role" id="default_signature_role" value="<%= template.default_signature_role %>" maxlength="<%= signatureMax %>">
         </label>
       </div>
       <% if (errors.signature) { %><span class="field-error"><%= errors.signature %></span><% } %>
       <span class="hint">Utilisée quand un message n'a pas sa propre signature.</span>
+      <div class="field-row">
+        <%- range('sigSize', 'Taille', s.sigSize, limits.sigSize[0], limits.sigSize[1], 0.05, 'em') %>
+        <%- select('sigAlign', 'Position', s.sigAlign, aligns) %>
+      </div>
     </fieldset>
 
     <label class="checkbox">
@@ -58,8 +174,11 @@
     <h2>Aperçu avec un message d'exemple</h2>
     <div class="screen-preview" id="template-preview" data-sample-name="<%= sample.signature_name %>" data-sample-role="<%= sample.signature_role %>">
       <%- include('../../partials/slide', { m: { ...sample, theme: template.theme, frame: template.frame, show_logo: template.show_logo,
+        style_json: JSON.stringify(style),
         sig_name: template.default_signature_name || sample.signature_name, sig_role: template.default_signature_role || sample.signature_role } }) %>
     </div>
+    <p class="hint">L'aperçu se met à jour pendant les réglages. Les messages qui utilisent ce template changeront à l'enregistrement.</p>
   </aside>
 </form>
+<input type="file" id="style-upload" accept="image/png,image/jpeg,image/webp,image/gif" hidden>
 <script src="/public/js/template-preview.js"></script>

@@ -30,44 +30,53 @@
 
 /* --- Cadre du message --- */
 .slide-frame {
-  font-family: var(--font-brand);
+  font-family: var(--tpl-font-body, var(--font-brand));
   font-size: var(--message-base, 2.6vw);
   width: 100%; height: 100%;
   display: grid;
   grid-template-rows: auto 1fr auto;
   gap: 0.9em;
-  padding: 1.6em 2.2em;
+  padding: var(--tpl-pad-y, 1.6em) var(--tpl-pad-x, 2.2em);
   background: var(--slide-bg);
+  background-image: var(--tpl-bg-image, none);
+  background-size: cover;
+  background-position: center;
   color: var(--slide-text);
   overflow: hidden;
 }
-.slide-frame { position: relative; }
-.slide-frame.frame-greige { box-shadow: inset 0 0 0 0.45em var(--brand-greige); }
-.slide-frame.frame-red { box-shadow: inset 0 0 0 0.45em var(--brand-red); }
+.slide-frame { position: relative; box-shadow: inset 0 0 0 var(--frame-w, 0) var(--frame-c, transparent); }
+.slide-frame.frame-greige { --frame-w: 0.45em; --frame-c: var(--brand-greige); }
+.slide-frame.frame-red { --frame-w: 0.45em; --frame-c: var(--brand-red); }
 
 .slide-head { display: flex; align-items: center; gap: 0.9em; min-width: 0; }
 .slide-logo {
   flex: none;
   display: block;
-  width: 3.6em; height: auto;
+  width: var(--tpl-logo-size, 3.6em); height: auto;
   aspect-ratio: 404 / 405;
 }
+/* Logo envoyé : proportions libres, hauteur limitée à sa taille. */
+.slide-frame.logo-custom .slide-logo { aspect-ratio: auto; width: auto; max-width: calc(var(--tpl-logo-size, 3.6em) * 3); max-height: var(--tpl-logo-size, 3.6em); }
+.slide-frame.logo-right .slide-head { flex-direction: row-reverse; }
 /* Sur l'aplat rouge, le logo (rouge) est posé sur une pastille blanche pour rester lisible. */
-.slide-frame.theme-red .slide-logo { background: var(--brand-white); padding: 0.25em; border-radius: 0.3em; box-sizing: content-box; }
+.slide-frame.theme-red:not(.logo-custom) .slide-logo { background: var(--brand-white); padding: 0.25em; border-radius: 0.3em; box-sizing: content-box; }
 .slide-heading {
   margin: 0;
-  font-size: 1.9em; font-weight: 700; line-height: 1.1;
+  flex: var(--tpl-heading-flex, 0 1 auto); min-width: 0;
+  font-family: var(--tpl-font-heading, inherit);
+  font-size: var(--tpl-heading-size, 1.9em); font-weight: var(--tpl-heading-weight, 700); line-height: 1.1;
   color: var(--slide-heading);
-  text-transform: uppercase;
+  text-transform: var(--tpl-heading-transform, uppercase);
+  text-align: var(--tpl-heading-align, left);
   overflow-wrap: anywhere;
 }
-.slide-frame.theme-dark .slide-heading { border-bottom: 0.08em solid var(--brand-red); padding-bottom: 0.1em; }
+.slide-frame.theme-dark .slide-heading { border-bottom: 0.08em solid var(--slide-marker); padding-bottom: 0.1em; }
 
-.slide-body { align-self: center; min-height: 0; overflow: hidden; padding: 0 0.6em; }
+.slide-body { align-self: center; min-height: 0; overflow: hidden; padding: 0 0.6em; font-size: var(--tpl-body-size, 1em); text-align: var(--tpl-body-align, left); }
 .slide-signature {
-  justify-self: end;
-  display: flex; flex-direction: column; align-items: center;
-  font-style: italic; font-size: 0.8em; line-height: 1.35;
+  justify-self: var(--tpl-sig-justify, end);
+  display: flex; flex-direction: column; align-items: var(--tpl-sig-items, center);
+  font-style: italic; font-size: var(--tpl-sig-size, 0.8em); line-height: 1.35;
   color: var(--slide-text);
 }
 .slide-signature .sig-role { color: var(--slide-muted); }
@@ -83,7 +92,7 @@
 
 /* --- Corps riche --- */
 .message-body {
-  font-family: var(--font-brand);
+  font-family: var(--tpl-font-body, var(--font-brand));
   font-weight: 400;
   line-height: 1.35;
   color: var(--slide-text, var(--brand-white));
@@ -96,7 +105,7 @@
 .message-body h1 { font-size: 1.7em; margin: 0 0 0.4em; line-height: 1.15; }
 .message-body h2 { font-size: 1.35em; margin: 0 0 0.4em; line-height: 1.2; }
 .message-body h3 { font-size: 1.15em; margin: 0 0 0.4em; }
-.message-body ul, .message-body ol { margin: 0 0 0.45em; padding-left: 3em; }
+.message-body ul, .message-body ol { margin: 0 0 0.45em; padding-left: 3em; display: var(--tpl-list-display, block); text-align: left; }
 .message-body ul { list-style: disc; }
 .message-body ol { list-style: decimal; }
 .message-body li p { margin: 0 0 0.15em; }

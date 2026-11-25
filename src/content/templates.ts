@@ -1,4 +1,5 @@
 import type { Db } from '../db/index.js';
+import { effectiveStyle, normalizeStyle, presetStyle, type TemplateStyle } from './style.js';
 
 export const THEMES = [
   { value: 'light', label: 'Clair (fond beige, texte noir chaud)' },
@@ -24,6 +25,7 @@ export interface Template {
   is_default: number;
   default_signature_name: string;
   default_signature_role: string;
+  style_json: string;
   created_at: string;
   updated_at: string;
   usage_count?: number;
@@ -37,15 +39,37 @@ export interface TemplateInput {
   isDefault: boolean;
   signatureName: string;
   signatureRole: string;
+  style: TemplateStyle;
 }
 
 export const NAME_MAX = 60;
 export const SIGNATURE_MAX = 80;
 
-export function validateTemplate(raw: Record<string, unknown>) {
+/** Champs du formulaire préfixés par « s_ » : réglages de style. */
+export function styleFromForm(raw: Record<string, unknown>): Record<string, unknown> {
+  const out: Record<string, unknown> = {};
+  for (const [k, v] of Object.entries(raw)) if (k.startsWith('s_')) out[k.slice(2)] = v;
+  // Case à cocher : absente du formulaire quand elle est décochée.
+  if ('s_present' in raw) out.headingUpper = raw.s_headingUpper === 'on';
+  delete out.present;
+  return out;
+}
+
+/** Cadre de la charte le plus proche (gardé en base pour compatibilité). */
+function frameFor(style: TemplateStyle): Frame {
+  if (!style.frameWidth) return 'none';
+  return style.frameColor === '#DE3619' ? 'red' : 'greige';
+}
+
+export function validateTemplate(
+  raw: Record<string, unknown>,
+  known: { media?: (file: string) => boolean; font?: (key: string) => boolean } = {},
+) {
   const name = String(raw.name ?? '').trim();
   const theme = THEMES.some((t) => t.value === raw.theme) ? (raw.theme as Theme) : 'light';
-  const frame = FRAMES.some((f) => f.value === raw.frame) ? (raw.frame as Frame) : 'none';
+  const rawFrame = FRAMES.some((f) => f.value === raw.frame) ? (raw.frame as Frame) : 'none';
+  const style = normalizeStyle(styleFromForm(raw), presetStyle(theme, rawFrame), known);
+  const frame = 's_frameWidth' in raw ? frameFor(style) : rawFrame;
   const signatureName = String(raw.default_signature_name ?? '').trim();
   const signatureRole = String(raw.default_signature_role ?? '').trim();
   const errors: Record<string, string> = {};
@@ -55,7 +79,7 @@ export function validateTemplate(raw: Record<string, unknown>) {
   if (!name) errors.name = 'Le nom est obligatoire.';
   else if (name.length > NAME_MAX) errors.name = `Le nom ne doit pas dépasser ${NAME_MAX} caractères.`;
   return {
-    input: { name, theme, frame, showLogo: raw.show_logo === 'on', isDefault: raw.is_default === 'on', signatureName, signatureRole } satisfies TemplateInput,
+    input: { name, theme, frame, showLogo: raw.show_logo === 'on', isDefault: raw.is_default === 'on', signatureName, signatureRole, style } satisfies TemplateInput,
     errors,
   };
 }
@@ -99,10 +123,10 @@ export function createTemplate(db: Db, input: TemplateInput): { id?: number; err
     const id = Number(
       db
         .prepare(
-          `INSERT INTO templates (name, theme, frame, show_logo, default_signature_name, default_signature_role)
-           VALUES (?, ?, ?, ?, ?, ?)`,
+          `INSERT INTO templates (name, theme, frame, show_logo, default_signature_name, default_signature_role, style_json)
+           VALUES (?, ?, ?, ?, ?, ?, ?)`,
         )
-        .run(input.name, input.theme, input.frame, input.showLogo ? 1 : 0, input.signatureName, input.signatureRole)
+        .run(input.name, input.theme, input.frame, input.showLogo ? 1 : 0, input.signatureName, input.signatureRole, JSON.stringify(input.style))
         .lastInsertRowid,
     );
     applyDefault(db, id, input.isDefault);
@@ -115,12 +139,27 @@ export function updateTemplate(db: Db, id: number, input: TemplateInput): { erro
   db.transaction(() => {
     db.prepare(
       `UPDATE templates SET name = ?, theme = ?, frame = ?, show_logo = ?,
-         default_signature_name = ?, default_signature_role = ?, updated_at = datetime('now')
+         default_signature_name = ?, default_signature_role = ?, style_json = ?, updated_at = datetime('now')
        WHERE id = ?`,
-    ).run(input.name, input.theme, input.frame, input.showLogo ? 1 : 0, input.signatureName, input.signatureRole, id);
+    ).run(input.name, input.theme, input.frame, input.showLogo ? 1 : 0, input.signatureName, input.signatureRole, JSON.stringify(input.style), id);
     applyDefault(db, id, input.isDefault);
   })();
   return {};
+}
+
+/** Copie d'un template (jamais par défaut), nommée « <nom> (copie) », « (copie 2) »… */
+export function duplicateTemplate(db: Db, id: number): { id?: number; name?: string; error?: string } {
+  const t = getTemplate(db, id);
+  if (!t) return { error: 'Template introuvable.' };
+  const base = t.name.slice(0, NAME_MAX - 10);
+  let name = `${base} (copie)`;
+  for (let i = 2; nameTaken(db, name); i++) name = `${base} (copie ${i})`;
+  const res = createTemplate(db, {
+    name, theme: t.theme, frame: t.frame, showLogo: !!t.show_logo, isDefault: false,
+    signatureName: t.default_signature_name, signatureRole: t.default_signature_role,
+    style: effectiveStyle(t.style_json, t.theme, t.frame),
+  });
+  return { ...res, name };
 }
 
 /** Supprime un template. Refusé s'il est utilisé ou si c'est le dernier. */

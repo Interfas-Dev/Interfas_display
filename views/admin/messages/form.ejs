@@ -7,7 +7,7 @@
 <form method="post" action="/admin/messages<%= message.id ? '/' + message.id : '' %>" class="message-form" id="message-form">
   <div class="editor-col">
     <label class="field">Template
-      <select name="template_id" id="template_id" data-templates="<%= JSON.stringify(templates.map((t) => ({ id: t.id, theme: t.theme, frame: t.frame, show_logo: t.show_logo, sig_name: t.default_signature_name, sig_role: t.default_signature_role }))) %>">
+      <select name="template_id" id="template_id" data-templates="<%= JSON.stringify(templates.map((t) => ({ id: t.id, theme: t.theme, frame: t.frame, show_logo: t.show_logo, sig_name: t.default_signature_name, sig_role: t.default_signature_role, look: look(t) }))) %>">
         <% templates.forEach((t) => { %>
           <option value="<%= t.id %>" <%= current && t.id === current.id ? 'selected' : '' %>><%= t.name %></option>
         <% }) %>
@@ -58,7 +58,7 @@
           <button type="button" data-cmd="undo" title="Annuler">↶</button>
           <button type="button" data-cmd="redo" title="Rétablir">↷</button>
         </div>
-        <div class="editor-surface theme-<%= current ? current.theme : 'light' %>" id="editor"></div>
+        <% const curLook = current ? look(current) : { css: '' }; %><div class="editor-surface theme-<%= current ? current.theme : 'light' %>" id="editor"<% if (curLook.css) { %> style="<%= curLook.css %>"<% } %>></div>
         <noscript><p class="field-error">L'éditeur nécessite JavaScript.</p></noscript>
       </div>
       <input type="hidden" name="content" id="content" value="<%= message.content_html %>">
@@ -143,6 +143,7 @@
     <div class="screen-preview" id="preview">
       <%- include('../../partials/slide', { m: {
         theme: current ? current.theme : 'light', frame: current ? current.frame : 'none', show_logo: current ? current.show_logo : 1,
+        style_json: current ? current.style_json : '{}',
         heading: message.heading, content_html: message.content_html, images_json: message.images_json,
         video_file: message.video_file, video_sound: message.video_sound,
         sig_name: (message.signature_name || message.signature_role) ? message.signature_name : (current ? current.default_signature_name : ''),

@@ -4,6 +4,7 @@ import Fastify, { type FastifyInstance } from 'fastify';
 import helmet from '@fastify/helmet';
 import fastifyStatic from '@fastify/static';
 import fastifyView from '@fastify/view';
+import { fontFacesCss, slideLook } from './content/style.js';
 import cookie from '@fastify/cookie';
 import formbody from '@fastify/formbody';
 import ejs from 'ejs';
@@ -54,6 +55,11 @@ export async function buildApp(config: AppConfig): Promise<FastifyInstance> {
   await app.register(fastifyView, {
     engine: { ejs },
     root: path.join(rootDir, 'views'),
+    // Aides de rendu disponibles dans toutes les vues (diapo et polices des templates).
+    defaultContext: {
+      look: (m: { style_json?: string; theme?: string; frame?: string }) => slideLook(m.style_json, m.theme ?? 'light', m.frame ?? 'none'),
+      fontFaces: () => fontFacesCss(db),
+    },
   });
 
   await app.register(healthRoutes);

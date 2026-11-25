@@ -1,9 +1,10 @@
 <%# Rendu d'un message dans son template. Variable attendue : m %>
 <% const hasSig = m.sig_name || m.sig_role;
-   const images = Array.isArray(m.images) ? m.images : (() => { try { return JSON.parse(m.images_json || '[]'); } catch { return []; } })(); %>
-<div class="slide-frame theme-<%= m.theme %> frame-<%= m.frame %>" data-slide>
+   const images = Array.isArray(m.images) ? m.images : (() => { try { return JSON.parse(m.images_json || '[]'); } catch { return []; } })();
+   const lk = look(m); %>
+<div class="slide-frame theme-<%= m.theme %> frame-<%= m.frame %><%= lk.logoRight ? ' logo-right' : '' %><%= lk.customLogo ? ' logo-custom' : '' %>"<% if (lk.css) { %> style="<%= lk.css %>"<% } %> data-slide>
   <header class="slide-head"<%= (!m.show_logo && !m.heading) ? ' hidden' : '' %>>
-    <img class="slide-logo" src="/public/img/logo-interfas.png" alt="INTERFAS"<%= m.show_logo ? '' : ' hidden' %>>
+    <img class="slide-logo" src="<%= lk.logoSrc %>" alt="<%= lk.customLogo ? 'Logo' : 'INTERFAS' %>"<%= m.show_logo ? '' : ' hidden' %>>
     <h1 class="slide-heading"<%= m.heading ? '' : ' hidden' %>><%= m.heading %></h1>
   </header>
   <div class="message-body slide-body"><%- m.content_html %></div>

@@ -61,7 +61,15 @@ describe('historique', () => {
 
   it('trace les templates et les comptes', async () => {
     await post(`/admin/templates/${tid}`, { name: 'Annonce claire', theme: 'dark', frame: 'none', show_logo: 'on', is_default: 'on' });
-    expect(JSON.parse(last().details)).toEqual(['Nom : Annonce (clair) → Annonce claire', 'Thème : Clair → Sombre', 'Cadre : Filet grège → Aucun']);
+    expect(JSON.parse(last().details)).toEqual([
+      'Nom : Annonce (clair) → Annonce claire',
+      'Thème : Clair → Sombre',
+      'Couleur de fond : #E7E3D8 → #221B13',
+      'Couleur du texte : #221B13 → #FFFFFF',
+      'Couleur du titre : #DE3619 → #FFFFFF',
+      'Couleur de la fonction : #5C574F → #E7E3D8',
+      'Épaisseur du filet : 0,45 em → 0 em',
+    ]);
 
     await post('/admin/users', { username: 'marie', display_name: 'Marie', role: 'editor', password: 'provisoire-123' });
     expect(last()).toMatchObject({ action: 'create', entity: 'user', label: 'Marie (marie)' });

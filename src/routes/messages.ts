@@ -14,7 +14,7 @@ import {
   type Message,
   type MessageInput,
 } from '../content/messages.js';
-import { mediaExists } from '../content/media.js';
+import { isFont, mediaExists } from '../content/media.js';
 import { diff, logAudit, yesNo, type FieldSpec } from '../audit.js';
 import { BRAND_COLORS, FONT_SIZES } from '../content/sanitize.js';
 import { getDefaultTemplate, getTemplate, listTemplates } from '../content/templates.js';
@@ -99,7 +99,7 @@ export async function messageRoutes(app: FastifyInstance) {
   app.addHook('preHandler', app.requireAuth);
 
   const templateExists = (id: number) => !!getTemplate(app.db, id);
-  const imageExists = (file: string) => mediaExists(app.db, file);
+  const imageExists = (file: string) => !isFont(file) && mediaExists(app.db, file);
   const specs = messageSpecs((id) => (id ? getTemplate(app.db, Number(id))?.name ?? `#${id}` : '(aucun)'));
 
   const notFound = (reply: FastifyReply) =>
