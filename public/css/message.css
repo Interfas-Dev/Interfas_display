@@ -10,8 +10,8 @@
   --slide-bg: var(--brand-beige);
   --slide-text: var(--brand-black);
   --slide-muted: var(--brand-gray);
-  --slide-heading: var(--brand-bordeaux); /* pas de titre en rouge : voir brand.css */
-  --slide-marker: var(--brand-bordeaux);
+  --slide-heading: var(--brand-red);     /* rouge sur beige : grands titres seulement */
+  --slide-marker: var(--brand-red);
 }
 .slide-frame.theme-dark, .editor-surface.theme-dark {
   --slide-bg: var(--brand-black);
