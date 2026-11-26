@@ -4,7 +4,7 @@ import { localNow } from '../content/schedule.js';
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { SIGNED_VERSION, WIDGET_NAME, buildWidget, ssspConfig, validHost } from '../content/tizen.js';
+import { WIDGET_NAME, buildWidget, packageVersion, ssspConfig, validHost } from '../content/tizen.js';
 
 const ICON = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../../public/img/logo-interfas.png');
 
@@ -69,7 +69,7 @@ export async function displayRoutes(app: FastifyInstance) {
   app.get('/display/sssp_config.xml', async (req, reply) => {
     const wgt = widgetFor(req);
     if (!wgt) return reply.code(400).send('Adresse invalide');
-    return reply.header('cache-control', 'no-store').type('application/xml; charset=utf-8').send(ssspConfig(wgt.length, signedWidget() ? SIGNED_VERSION : undefined));
+    return reply.header('cache-control', 'no-store').type('application/xml; charset=utf-8').send(ssspConfig(wgt.length, signedWidget() ? packageVersion(wgt) : undefined));
   });
 
   app.get(`/display/${WIDGET_NAME}.wgt`, async (req, reply) => {

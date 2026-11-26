@@ -8,12 +8,12 @@
  * Le paquet est construit à la volée pour l'adresse demandée (l'application
  * renvoie vers le même serveur), au format ZIP sans compression.
  */
-import { crc32 } from 'node:zlib';
+import { crc32, inflateRawSync } from 'node:zlib';
 
 export const WIDGET_NAME = 'InterfasDisplay';
 /** À augmenter quand le contenu du paquet change : la télé réinstalle alors l'application. */
-export const WIDGET_VERSION = '1.0.0';
-/** Version annoncée pour un paquet signé déposé sur le serveur (doit différer pour que la télé l'installe). */
+export const WIDGET_VERSION = '1.0.2';
+/** Version annoncée pour un paquet signé dont le config.xml est illisible. */
 export const SIGNED_VERSION = '1.0.1';
 
 /** Nom d'hôte (et port) acceptable dans l'adresse de l'écran. */
@@ -24,32 +24,47 @@ export function configXml(): string {
   return `<?xml version="1.0" encoding="UTF-8"?>
 <widget xmlns="http://www.w3.org/ns/widgets" xmlns:tizen="http://tizen.org/ns/widgets" id="http://interfas.fr/${WIDGET_NAME}" version="${WIDGET_VERSION}" viewmodes="maximized">
   <tizen:application id="IntfsDispl.${WIDGET_NAME}" package="IntfsDispl" required_version="2.3"/>
+  <tizen:profile name="tv-samsung"/>
   <content src="index.html"/>
   <icon src="icon.png"/>
   <name>Interfas Display</name>
   <access origin="*" subdomains="true"/>
   <tizen:allow-navigation>*</tizen:allow-navigation>
   <tizen:privilege name="http://tizen.org/privilege/internet"/>
-  <tizen:setting screen-orientation="landscape" context-menu="disable" background-support="disable" encryption="disable" install-location="auto" hwkey-event="enable"/>
+  <tizen:setting hwkey-event="enable"/>
 </widget>
 `;
 }
 
-/** Page de démarrage : ouvre l'écran ; nouvel essai toutes les 30 s si le serveur ne répond pas. */
-export function indexHtml(target: string): string {
+/*
+ * Page de démarrage. Les télés appliquent une politique de sécurité qui
+ * interdit le style et le script écrits dans la page : ils sont dans des
+ * fichiers séparés (style.css, main.js).
+ */
+export function indexHtml(): string {
   return `<!doctype html>
 <html lang="fr">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Interfas Display</title>
-<style>html,body{margin:0;height:100%;background:#221B13;color:#E7E3D8;font-family:sans-serif}
-body{display:flex;align-items:center;justify-content:center;font-size:2.5vw}</style>
+<link rel="stylesheet" href="style.css">
 </head>
 <body>
 <p id="msg">Connexion à l'écran de l'atelier…</p>
-<script>
-(function () {
+<script src="main.js"></script>
+</body>
+</html>
+`;
+}
+
+export const STYLE_CSS = `html,body{margin:0;height:100%;background:#221B13;color:#E7E3D8;font-family:sans-serif}
+body{display:flex;align-items:center;justify-content:center;font-size:2.5vw}
+`;
+
+/** Ouvre l'écran ; nouvel essai toutes les 30 s si le serveur ne répond pas. */
+export function mainJs(target: string): string {
+  return `(function () {
   var target = ${JSON.stringify(target)};
   // Test de présence du serveur par une image (pas de contrainte CORS), puis ouverture de l'écran.
   var probe = ${JSON.stringify(target + '/ping.gif')};
@@ -69,9 +84,6 @@ body{display:flex;align-items:center;justify-content:center;font-size:2.5vw}</st
   }
   go();
 })();
-</script>
-</body>
-</html>
 `;
 }
 
@@ -134,9 +146,52 @@ export function zipStored(files: { name: string; data: Buffer }[], when = new Da
 export function buildWidget(target: string, icon: Buffer): Buffer {
   return zipStored([
     { name: 'config.xml', data: Buffer.from(configXml()) },
-    { name: 'index.html', data: Buffer.from(indexHtml(target)) },
+    { name: 'index.html', data: Buffer.from(indexHtml()) },
+    { name: 'style.css', data: Buffer.from(STYLE_CSS) },
+    { name: 'main.js', data: Buffer.from(mainJs(target)) },
     { name: 'icon.png', data: icon },
   ]);
+}
+
+/** Lit un fichier d'un ZIP (stocké ou compressé), ou null. */
+export function readZipEntry(zip: Buffer, wanted: string): Buffer | null {
+  try {
+    let end = -1;
+    for (let i = zip.length - 22; i >= Math.max(0, zip.length - 65557); i--) {
+      if (zip.readUInt32LE(i) === 0x06054b50) { end = i; break; }
+    }
+    if (end < 0) return null;
+    const count = zip.readUInt16LE(end + 10);
+    let p = zip.readUInt32LE(end + 16);
+    for (let n = 0; n < count; n++) {
+      if (zip.readUInt32LE(p) !== 0x02014b50) return null;
+      const method = zip.readUInt16LE(p + 10);
+      const size = zip.readUInt32LE(p + 20);
+      const nameLen = zip.readUInt16LE(p + 28);
+      const extraLen = zip.readUInt16LE(p + 30);
+      const commentLen = zip.readUInt16LE(p + 32);
+      const local = zip.readUInt32LE(p + 42);
+      const name = zip.subarray(p + 46, p + 46 + nameLen).toString('utf8');
+      if (name === wanted) {
+        const start = local + 30 + zip.readUInt16LE(local + 26) + zip.readUInt16LE(local + 28);
+        const data = zip.subarray(start, start + size);
+        if (method === 0) return Buffer.from(data);
+        if (method === 8) return inflateRawSync(data);
+        return null;
+      }
+      p += 46 + nameLen + extraLen + commentLen;
+    }
+  } catch {
+    /* ZIP abîmé */
+  }
+  return null;
+}
+
+/** Version déclarée dans le config.xml d'un paquet (signé), pour que la télé installe chaque nouvelle version. */
+export function packageVersion(wgt: Buffer): string {
+  const cfg = readZipEntry(wgt, 'config.xml')?.toString('utf8') ?? '';
+  const m = /<widget\b[^>]*\sversion="(\d+\.\d+\.\d+)"/.exec(cfg);
+  return m ? m[1] : SIGNED_VERSION;
 }
 
 export function ssspConfig(size: number, version = WIDGET_VERSION): string {

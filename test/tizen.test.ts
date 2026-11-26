@@ -6,7 +6,8 @@ import os from 'node:os';
 import { buildApp } from '../src/app.js';
 import { loadConfig } from '../src/config.js';
 import path from 'node:path';
-import { zipStored } from '../src/content/tizen.js';
+import { deflateRawSync } from 'node:zlib';
+import { packageVersion, readZipEntry, zipStored } from '../src/content/tizen.js';
 
 let app: FastifyInstance;
 beforeAll(async () => { app = await makeApp(); });
@@ -28,6 +29,12 @@ describe('URL Launcher des télés Samsung', () => {
     // L'application renvoie vers l'écran du même serveur.
     expect(wgt.rawPayload.toString('latin1')).toContain('"http://screen.interfas.fr/display"');
     expect(wgt.rawPayload.toString('latin1')).toContain('config.xml');
+    // Pas de style ni de script dans la page : la politique de sécurité des télés les bloque.
+    const index = readZipEntry(wgt.rawPayload, 'index.html')!.toString();
+    expect(index).not.toMatch(/<style|<script>/);
+    expect(index).toContain('<script src="main.js"></script>');
+    expect(readZipEntry(wgt.rawPayload, 'main.js')!.toString()).toContain('/display/ping.gif');
+    expect(readZipEntry(wgt.rawPayload, 'config.xml')!.toString()).toContain('<tizen:profile name="tv-samsung"/>');
   });
 
   it('répond au test de présence depuis l’application de la télé', async () => {
@@ -44,12 +51,25 @@ describe('URL Launcher des télés Samsung', () => {
       fs.writeFileSync(path.join(dir, 'InterfasDisplay.wgt'), signed);
       const cfg = await other.inject({ method: 'GET', url: '/display/sssp_config.xml', headers: { host: 'screen.interfas.fr' } });
       expect(cfg.body).toContain(`<size>${signed.length}</size>`);
-      expect(cfg.body).toContain('<ver>1.0.1</ver>');
+      expect(cfg.body).toContain('<ver>1.0.1</ver>'); // config.xml illisible : version par défaut
       const wgt = await other.inject({ method: 'GET', url: '/display/InterfasDisplay.wgt' });
       expect(wgt.rawPayload.equals(signed)).toBe(true);
     } finally {
       await other.close();
     }
+  });
+
+  it('annonce la version du config.xml d’un paquet signé (compressé)', () => {
+    const cfg = '<?xml version="1.0"?><widget xmlns="http://www.w3.org/ns/widgets" id="x" version="1.0.7"></widget>';
+    const zip = zipStored([{ name: 'config.xml', data: Buffer.from(cfg) }]);
+    expect(packageVersion(zip)).toBe('1.0.7');
+    // Même paquet en « deflate », comme le produisent les outils Tizen.
+    const rebuilt = zipStored([{ name: 'config.xml', data: deflateRawSync(Buffer.from(cfg)) }]);
+    rebuilt.writeUInt16LE(8, 8); // méthode locale
+    const central = rebuilt.indexOf(Buffer.from([0x50, 0x4b, 0x01, 0x02]));
+    rebuilt.writeUInt16LE(8, central + 10);
+    expect(packageVersion(rebuilt)).toBe('1.0.7');
+    expect(packageVersion(Buffer.from('pas un zip'))).toBe('1.0.1');
   });
 
   it('refuse un nom d’hôte suspect', async () => {
