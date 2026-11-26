@@ -4,7 +4,7 @@ import { localNow } from '../content/schedule.js';
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { WIDGET_NAME, buildWidget, ssspConfig, validHost } from '../content/tizen.js';
+import { SIGNED_VERSION, WIDGET_NAME, buildWidget, ssspConfig, validHost } from '../content/tizen.js';
 
 const ICON = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../../public/img/logo-interfas.png');
 
@@ -32,7 +32,22 @@ export async function displayRoutes(app: FastifyInstance) {
    * La télé lit sssp_config.xml puis installe le paquet .wgt, qui ouvre /display.
    */
   const widgets = new Map<string, Buffer>();
+  /*
+   * Paquet signé déposé sur le serveur (dossier des données) : prioritaire sur
+   * le paquet construit à la volée, que certaines télés refusent faute de signature.
+   */
+  const signedPath = path.join(path.dirname(app.config.databasePath), `${WIDGET_NAME}.wgt`);
+  const signedWidget = () => {
+    try {
+      return fs.readFileSync(signedPath);
+    } catch {
+      return null;
+    }
+  };
+
   const widgetFor = (req: { protocol: string; host: string }) => {
+    const signed = signedWidget();
+    if (signed) return signed;
     const host = validHost(req.host) ? req.host : null;
     if (!host) return null;
     const target = `${req.protocol}://${host}/display`;
@@ -54,7 +69,7 @@ export async function displayRoutes(app: FastifyInstance) {
   app.get('/display/sssp_config.xml', async (req, reply) => {
     const wgt = widgetFor(req);
     if (!wgt) return reply.code(400).send('Adresse invalide');
-    return reply.header('cache-control', 'no-store').type('application/xml; charset=utf-8').send(ssspConfig(wgt.length));
+    return reply.header('cache-control', 'no-store').type('application/xml; charset=utf-8').send(ssspConfig(wgt.length, signedWidget() ? SIGNED_VERSION : undefined));
   });
 
   app.get(`/display/${WIDGET_NAME}.wgt`, async (req, reply) => {

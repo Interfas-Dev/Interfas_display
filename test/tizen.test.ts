@@ -1,6 +1,11 @@
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import type { FastifyInstance } from 'fastify';
 import { makeApp } from './helpers/app.js';
+import fs from 'node:fs';
+import os from 'node:os';
+import { buildApp } from '../src/app.js';
+import { loadConfig } from '../src/config.js';
+import path from 'node:path';
 import { zipStored } from '../src/content/tizen.js';
 
 let app: FastifyInstance;
@@ -29,6 +34,22 @@ describe('URL Launcher des télés Samsung', () => {
     const res = await app.inject({ method: 'GET', url: '/display/ping.gif' });
     expect(res.statusCode).toBe(200);
     expect(res.headers['cross-origin-resource-policy']).toBe('cross-origin');
+  });
+
+  it('sert en priorité un paquet signé déposé à côté de la base', async () => {
+    const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'interfas-tv-'));
+    const other = await buildApp({ ...loadConfig({}), databasePath: path.join(dir, 'interfas.db'), mediaDir: path.join(dir, 'media'), backupDir: path.join(dir, 'b'), backupTime: '', logLevel: 'silent' });
+    try {
+      const signed = Buffer.from('PK-paquet-signe');
+      fs.writeFileSync(path.join(dir, 'InterfasDisplay.wgt'), signed);
+      const cfg = await other.inject({ method: 'GET', url: '/display/sssp_config.xml', headers: { host: 'screen.interfas.fr' } });
+      expect(cfg.body).toContain(`<size>${signed.length}</size>`);
+      expect(cfg.body).toContain('<ver>1.0.1</ver>');
+      const wgt = await other.inject({ method: 'GET', url: '/display/InterfasDisplay.wgt' });
+      expect(wgt.rawPayload.equals(signed)).toBe(true);
+    } finally {
+      await other.close();
+    }
   });
 
   it('refuse un nom d’hôte suspect', async () => {

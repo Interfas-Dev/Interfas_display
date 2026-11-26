@@ -13,6 +13,8 @@ import { crc32 } from 'node:zlib';
 export const WIDGET_NAME = 'InterfasDisplay';
 /** À augmenter quand le contenu du paquet change : la télé réinstalle alors l'application. */
 export const WIDGET_VERSION = '1.0.0';
+/** Version annoncée pour un paquet signé déposé sur le serveur (doit différer pour que la télé l'installe). */
+export const SIGNED_VERSION = '1.0.1';
 
 /** Nom d'hôte (et port) acceptable dans l'adresse de l'écran. */
 const HOST_RE = /^[a-z0-9.-]+(:\d{1,5})?$/i;
@@ -137,10 +139,10 @@ export function buildWidget(target: string, icon: Buffer): Buffer {
   ]);
 }
 
-export function ssspConfig(size: number): string {
+export function ssspConfig(size: number, version = WIDGET_VERSION): string {
   return `<?xml version="1.0" encoding="UTF-8"?>
 <widget>
-  <ver>${WIDGET_VERSION}</ver>
+  <ver>${version}</ver>
   <size>${size}</size>
   <widgetname>${WIDGET_NAME}</widgetname>
   <webtype>tizen</webtype>

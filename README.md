@@ -73,7 +73,7 @@ Points d'attention :
 
 - `DISPLAY_HOST` doit être couvert par le certificat wildcard et résolu par le DNS du LAN vers le serveur.
 - L'écran d'affichage doit être dans `DISPLAY_ALLOWED_IPS`, sinon Traefik renvoie 403.
-- Télé Samsung avec l'URL Launcher : donner `http://<DISPLAY_HOST>/display` (en HTTP). L'URL Launcher n'ouvre pas une page : il lit `/display/sssp_config.xml` puis installe le paquet `/display/InterfasDisplay.wgt`, une mini application qui ouvre l'écran (et réessaie toutes les 30 s si le serveur ne répond pas). Seuls l'écran et ses fichiers sont servis en HTTP ; l'administration reste en HTTPS. Pour forcer la réinstallation après un changement du paquet, augmenter `WIDGET_VERSION` dans `src/content/tizen.ts`.
+- Télé Samsung avec l'URL Launcher : donner `http://<DISPLAY_HOST>/display` (en HTTP). L'URL Launcher n'ouvre pas une page : il lit `/display/sssp_config.xml` puis installe le paquet `/display/InterfasDisplay.wgt`, une mini application qui ouvre l'écran (et réessaie toutes les 30 s si le serveur ne répond pas). Seuls l'écran et ses fichiers sont servis en HTTP ; l'administration reste en HTTPS. Pour forcer la réinstallation après un changement du paquet, augmenter `WIDGET_VERSION` dans `src/content/tizen.ts`. Si la télé exige un paquet signé (« Impossible d'installer »), signer l'application avec Tizen Studio et déposer le fichier : `docker compose cp InterfasDisplay.wgt app:/app/data/InterfasDisplay.wgt` ; il est alors servi à la place du paquet non signé (version annoncée 1.0.1).
 - Ne pas ajouter de middleware `compress` ni `buffering` : le flux temps réel `/display/events` (SSE) doit passer tel quel.
 - En Docker, `COOKIE_SECURE` et `TRUST_PROXY` sont forcés à `true` : la connexion à l'admin ne fonctionne donc qu'en HTTPS.
 
